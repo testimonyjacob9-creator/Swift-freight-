@@ -1,5 +1,5 @@
 // =====================================================
-// SWIFTFREIGHT – CONTACT.JS  (ES Module)
+// SWIFT AIR CARGO – CONTACT.JS  (ES Module)
 // Firebase Firestore contact form submission
 // =====================================================
 

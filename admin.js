@@ -1,5 +1,5 @@
 // =====================================================
-// SWIFTFREIGHT – ADMIN.JS
+// SWIFT AIR CARGO – ADMIN.JS
 // Firebase Auth + Firestore admin dashboard
 // =====================================================
 
@@ -13,8 +13,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getFirestore,
-  collection, query, orderBy, getDocs,
-  doc, updateDoc, addDoc, serverTimestamp, Timestamp
+  collection, query, orderBy, getDocs, limit, onSnapshot,
+  doc, getDoc, setDoc, updateDoc, addDoc, deleteDoc, serverTimestamp, Timestamp, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
@@ -41,7 +41,7 @@ const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 // ─── State ────────────────────────────────────────────
 let contacts  = [];   // raw Firestore docs: { id, ...data }
 let shipments = [];
-let activeTab = "contacts";
+let activeTab = "overview";
 let currentShipmentId = null;
 let smMap = null;
 let smMarker = null;
@@ -96,6 +96,7 @@ async function showDashboard() {
   document.getElementById("loginScreen").classList.add("hidden");
   document.getElementById("dashboard").classList.remove("hidden");
   await loadAll();
+  startRealtime();
 }
 
 // ─── Load data ────────────────────────────────────────
@@ -139,6 +140,10 @@ window.switchTab = function (tab) {
     el.classList.toggle("active", el.dataset.tab === tab);
   });
 
+  if (tab === "overview") renderOverview();
+  if (tab === "chats") renderChatList();
+  if (tab === "settings") fillSettingsForm();
+  if (tab === "reviews") loadReviewsAdmin();
   if (tab === "add") {
     if (!addMapInited) {
       initAddMap();
@@ -246,29 +251,35 @@ window.markAllRead = async function () {
 };
 
 // ─── Render Shipments ─────────────────────────────────
+const STATUSES = ["Picked Up", "In Transit", "Customs Clearance", "Out for Delivery", "Delivered"];
+const STATUS_COLORS = {
+  "Delivered": "#22c55e", "Out for Delivery": "#3b82f6", "Customs Clearance": "#f59e0b",
+  "In Transit": "#d97706", "Picked Up": "#8b93a7"
+};
+let shipFilter = "All";
+window.setShipFilter = f => { shipFilter = f; renderShipments(); };
+
 window.renderShipments = function () {
   const q    = (document.getElementById("shipSearch")?.value || "").toLowerCase();
   const list = document.getElementById("shipmentList");
+  const chips = document.getElementById("shipFilters");
+  if (chips) {
+    chips.innerHTML = ["All", ...STATUSES].map(f => {
+      const n = f === "All" ? shipments.length : shipments.filter(s => s.status === f).length;
+      return `<button class="chip ${shipFilter === f ? "active" : ""}" onclick="setShipFilter('${f}')">${f} <b>${n}</b></button>`;
+    }).join("");
+  }
 
   const filtered = shipments.filter(s =>
-    !q ||
-    s.trackingId?.toLowerCase().includes(q) ||
-    s.client?.toLowerCase().includes(q) ||
-    s.status?.toLowerCase().includes(q)
+    (shipFilter === "All" || s.status === shipFilter) &&
+    (!q || [s.trackingId, s.client, s.status, s.origin, s.destination, s.receiverName, s.senderName, s.orderId]
+      .some(v => String(v || "").toLowerCase().includes(q)))
   );
 
   if (!filtered.length) {
-    list.innerHTML = `<div class="empty-msg">No shipments yet. Add one from the sidebar.</div>`;
+    list.innerHTML = `<div class="empty-msg">No shipments match. Add one from the sidebar.</div>`;
     return;
   }
-
-  const statusColor = {
-    "Delivered":         "#22c55e",
-    "Out for Delivery":  "#3b82f6",
-    "Customs Clearance": "#f59e0b",
-    "In Transit":        "var(--accent)",
-    "Picked Up":         "var(--text2)"
-  };
 
   list.innerHTML = filtered.map(s => `
     <div class="submission-card" onclick="openShipment('${esc(s.id)}')">
@@ -276,22 +287,74 @@ window.renderShipments = function () {
         <span class="sub-name" style="font-family:var(--font-display);letter-spacing:1px;font-size:1.05rem">
           ${esc(s.trackingId || "—")}
         </span>
-        <span style="font-size:0.8rem;font-weight:700;padding:3px 12px;border-radius:50px;background:rgba(255,255,255,0.06);color:${statusColor[s.status] || "var(--text2)"}">
-          ${s.status || "—"}
+        <span class="pill" style="color:${STATUS_COLORS[s.status] || "var(--text2)"};border-color:${STATUS_COLORS[s.status] || "var(--border2)"}">
+          ${esc(s.status || "—")}
         </span>
       </div>
       <div class="sub-meta">
-        ${s.client      ? `<span>👤 ${esc(s.client)}</span>`      : ""}
+        ${(s.receiverName || s.client) ? `<span>👤 ${esc(s.receiverName || s.client)}</span>` : ""}
         ${s.origin      ? `<span>🛫 ${esc(s.origin)}</span>`      : ""}
         ${s.destination ? `<span>🛬 ${esc(s.destination)}</span>` : ""}
         ${s.service     ? `<span>🚚 ${esc(s.service)}</span>`     : ""}
+        ${s.payStatus   ? `<span class="paytag ${esc(String(s.payStatus).toLowerCase())}">💳 ${esc(s.payStatus)}</span>` : ""}
       </div>
       <div class="sub-preview">
-        📍 ${s.location || "—"} &nbsp;|&nbsp; ETA: ${fmtDate(s.eta)} &nbsp;|&nbsp; Updated: ${fmtDate(s.lastUpdate)}
+        📍 ${esc(s.location || "—")} &nbsp;|&nbsp; ETA: ${fmtDate(s.eta)} &nbsp;|&nbsp; Updated: ${fmtDate(s.lastUpdate)}
       </div>
     </div>
   `).join("");
+  renderOverview();
 };
+
+window.exportShipmentsCsv = function () {
+  const cols = ["trackingId","orderId","status","location","client","senderName","senderPhone","senderAddress","originOffice","receiverName","receiverPhone","receiverAddress","destOffice","origin","destination","service","transport","shipType","product","qty","weight","charge","customsCharge","payMode","payStatus"];
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const rows = [cols.join(",")].concat(shipments.map(s => cols.map(c => q(s[c])).join(",")));
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([rows.join("\n")], { type: "text/csv" }));
+  a.download = `shipments-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+};
+
+window.deleteShipment = async function () {
+  const s = shipments.find(x => x.id === currentShipmentId); if (!s) return;
+  if (!confirm(`Delete shipment ${s.trackingId}? This cannot be undone.`)) return;
+  await deleteDoc(doc(db, "shipments", s.id));
+  shipments = shipments.filter(x => x.id !== s.id);
+  closeShipModal(); renderShipments();
+};
+
+// ─── Extra order fields (sender / consignee / payment) ────
+const PAY_MODES = ["Bank Transfer", "Cash", "Card", "PayPal", "Crypto", "Mobile Money", "Other"];
+const EXTRA_FIELDS = [
+  { k: "orderId", l: "Order ID", p: "1377" },
+  { k: "transport", l: "Mode of transport", t: "select", o: ["Air freight", "Sea freight", "Road haulage", "Rail freight"] },
+  { k: "senderName", l: "Sender name" }, { k: "senderPhone", l: "Sender phone", p: "+44 7826 613094" },
+  { k: "senderAddress", l: "Sender address", full: true }, { k: "originOffice", l: "Origin office", p: "United Kingdom" },
+  { k: "receiverName", l: "Consignee (receiver) name" }, { k: "receiverPhone", l: "Consignee phone", p: "+90 531 835 32 19" },
+  { k: "receiverAddress", l: "Consignee address", full: true }, { k: "destOffice", l: "Destination office", p: "Turkey" },
+  { k: "shipType", l: "Type of shipment", p: "Parcel" }, { k: "product", l: "Product" },
+  { k: "qty", l: "Qty", p: "1" }, { k: "payMode", l: "Payment mode", t: "select", o: PAY_MODES },
+  { k: "payStatus", l: "Payment status", t: "select", o: ["Pending", "Paid", "Unpaid", "Partially paid"] },
+  { k: "customsCharge", l: "Customs clearance charges", p: "USD 0.00" }
+];
+function renderExtra(boxId, prefix, data = {}) {
+  document.getElementById(boxId).innerHTML = EXTRA_FIELDS.map(f => {
+    const id = prefix + f.k, v = data[f.k] ?? "";
+    const input = f.t === "select"
+      ? `<select id="${id}">${f.o.map(o => `<option ${o === v ? "selected" : ""}>${o}</option>`).join("")}</select>`
+      : `<input type="text" id="${id}" value="${escAttr(v)}" placeholder="${escAttr(f.p || "")}"/>`;
+    return `<div class="form-group ${f.full ? "full" : ""}"><label>${f.l}</label>${input}</div>`;
+  }).join("");
+}
+function readExtra(prefix) {
+  const o = {};
+  EXTRA_FIELDS.forEach(f => { const v = document.getElementById(prefix + f.k)?.value.trim(); o[f.k] = v || null; });
+  return o;
+}
+const newOrderId = () => String(Math.floor(100000 + Math.random() * 900000));
+document.addEventListener("DOMContentLoaded", () => {
+  renderExtra("addExtra", "x_", { orderId: newOrderId(), shipType: "Parcel", qty: "1" });
+});
 
 // ─── Open Shipment ────────────────────────────────────
 window.openShipment = function (id) {
@@ -318,6 +381,12 @@ window.openShipment = function (id) {
     <div class="form-group"><label>ETA</label><input type="datetime-local" id="smEta" value="${toLocalInput(s.eta)}"/></div>
     <div class="form-group"><label>Freight charge</label><input type="text" id="smCharge" value="${escAttr(s.charge)}" placeholder="USD 480.00"/></div>
   `;
+
+  renderExtra("smExtra", "sx_", s);
+  document.getElementById("smHistory").innerHTML = (s.history && s.history.length)
+    ? `<p class="field-title">🕘 Status history</p>` + [...s.history].reverse().map(h =>
+        `<div class="h-row"><b style="color:${STATUS_COLORS[h.status] || "inherit"}">${esc(h.status)}</b><span>${esc(h.location || "")}</span><small>${fmtDate(h.at)}</small></div>`).join("")
+    : "";
 
   // ── 3D live-position map (MapLibre GL, no API key) ──
   document.getElementById("smMapWrap").classList.remove("hidden");
@@ -475,8 +544,13 @@ window.updateShipmentStatus = async function () {
       destination: dest    || null,
       weight:      weight  || null,
       eta:         etaRaw ? Timestamp.fromDate(new Date(etaRaw)) : null,
-      lastUpdate: serverTimestamp()
+      lastUpdate: serverTimestamp(),
+      ...readExtra("sx_")
     };
+    const prev = shipments.find(x => x.id === currentShipmentId);
+    if (!prev || prev.status !== status || (prev.location || "") !== location) {
+      payload.history = arrayUnion({ status, location: location || "", at: Timestamp.now() });
+    }
     if (smCoords) {
       payload.lat = smCoords.lat;
       payload.lng = smCoords.lng;
@@ -488,8 +562,9 @@ window.updateShipmentStatus = async function () {
     if (s) {
       Object.assign(s, {
         status, location, client, service, charge,
-        origin, destination: dest, weight, photos
+        origin, destination: dest, weight, photos, ...readExtra("sx_")
       });
+      s.history = [...(s.history || []), ...(payload.history ? [{ status, location, at: Timestamp.now() }] : [])];
       if (smCoords) { s.lat = smCoords.lat; s.lng = smCoords.lng; }
     }
 
@@ -580,7 +655,9 @@ window.addShipment = async function () {
     lastUpdate:  lastUpdateRaw ? Timestamp.fromDate(new Date(lastUpdateRaw)) : serverTimestamp(),
     steps:       steps.some(s => s) ? steps : null,
     photos:      photos.length ? photos : null,
-    createdAt:   serverTimestamp()
+    createdAt:   serverTimestamp(),
+    history:     [{ status, location: document.getElementById("sLocation").value.trim() || "", at: Timestamp.now() }],
+    ...readExtra("x_")
   };
   if (addMapCoords) {
     payload.lat = addMapCoords.lat;
@@ -609,6 +686,8 @@ window.addShipment = async function () {
     resetAddMap();
     addPending = []; drawAdd();
     window.newTrackingId();
+    renderExtra("addExtra", "x_", { orderId: newOrderId(), shipType: "Parcel", qty: "1" });
+    renderShipments();
 
   } catch (e) {
     statusEl.className = "form-status error";
@@ -740,64 +819,357 @@ async function uploadPending(list, trackingId, statusEl) {
 }
 
 // ═════════════════════════════════════════════════════
-// PRINTABLE RECEIPT  (HTML → PNG image / print)
+// REALTIME: contacts, chats, alerts
 // ═════════════════════════════════════════════════════
-window.openReceipt = async function (id) {
-  const s = shipments.find(x => x.id === id);
-  if (!s) return;
-  const trackUrl = new URL(`track.html?id=${encodeURIComponent(s.trackingId || "")}`, location.href).href;
-  const row = (k, v) => `<div class="r-row"><span>${k}</span><strong>${esc(v || "—")}</strong></div>`;
+let SETTINGS = {
+  email: "swiftfreightlogistics2026@gmail.com", phone: "+31657446248", whatsapp: "+31657446248",
+  hours: "24/7", offices: [{ name: "Head Office", address: "New York City, USA" }],
+  waMessage: "Hello Swift Air Cargo 👋 I'd like to talk to a human about my order processes.",
+  chatEnabled: true, chatGreeting: "Hi 👋 I'm the Swift Air Cargo assistant. How can I help you today?",
+  website: "", payInfo: "", terms: "Goods are carried subject to our terms of carriage. Keep this receipt for claims."
+};
+let chats = [], activeChatId = null, unsubMsgs = null, realtimeStarted = false;
+const digits = v => String(v || "").replace(/[^\d]/g, "");
+
+function beep() {
+  if (!document.getElementById("chatSound")?.checked) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [880, 1175].forEach((f, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.16);
+      g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + i * 0.16 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.16 + 0.15);
+      o.start(ctx.currentTime + i * 0.16); o.stop(ctx.currentTime + i * 0.16 + 0.16);
+    });
+  } catch (e) {}
+}
+
+function updateBadges() {
+  const humans = chats.filter(c => c.needsHuman || (c.unreadAdmin > 0 && c.mode === "human")).length;
+  const unread = contacts.filter(c => !c.read).length;
+  const set = (id, n) => { const el = document.getElementById(id); if (!el) return; el.textContent = n; el.classList.toggle("hidden", !n); };
+  set("badgeChats", humans); set("badgeContacts", unread);
+  document.title = (humans + unread ? `(${humans + unread}) ` : "") + "Admin – Swift Air Cargo";
+}
+
+function startRealtime() {
+  if (realtimeStarted) return; realtimeStarted = true;
+  loadSettings();
+  let firstC = true;
+  onSnapshot(query(collection(db, "contacts"), orderBy("timestamp", "desc")), snap => {
+    if (!firstC && snap.docChanges().some(c => c.type === "added")) beep();
+    firstC = false;
+    contacts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderContacts(); renderContactStats(); updateBadges(); renderOverview();
+  }, e => console.warn("contacts live", e));
+
+  let firstS = true;
+  onSnapshot(query(collection(db, "chats"), orderBy("lastAt", "desc"), limit(100)), snap => {
+    if (!firstS) snap.docChanges().forEach(ch => {
+      const d = ch.doc.data();
+      if (ch.type === "added" || (ch.type === "modified" && (d.unreadAdmin || 0) > 0 && ch.doc.id !== activeChatId)) {
+        if (d.needsHuman || d.mode === "human") beep();
+      }
+    });
+    firstS = false;
+    chats = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderChatList(); updateBadges(); renderOverview();
+  }, e => console.warn("chats live", e));
+}
+
+// ═════════════════════════════════════════════════════
+// OVERVIEW
+// ═════════════════════════════════════════════════════
+function renderOverview() {
+  const grid = document.getElementById("kpiGrid"); if (!grid) return;
+  const by = st => shipments.filter(s => s.status === st).length;
+  const unpaid = shipments.filter(s => /pending|unpaid|partial/i.test(s.payStatus || "")).length;
+  const waiting = chats.filter(c => c.needsHuman).length;
+  const kpi = (n, l, ic, tab) => `<div class="kpi" ${tab ? `onclick="switchTab('${tab}')"` : ""}><span class="kpi-ic">${ic}</span><strong>${n}</strong><label>${l}</label></div>`;
+  grid.innerHTML =
+    kpi(shipments.length, "Total shipments", "📦", "shipments") +
+    kpi(by("In Transit") + by("Picked Up") + by("Customs Clearance") + by("Out for Delivery"), "Active", "🚚", "shipments") +
+    kpi(by("Delivered"), "Delivered", "✅", "shipments") +
+    kpi(waiting, "Chats need you", "💬", "chats") +
+    kpi(contacts.filter(c => !c.read).length, "Unread messages", "📩", "contacts") +
+    kpi(unpaid, "Payment pending", "💳", "shipments");
+
+  const max = Math.max(1, ...STATUSES.map(by));
+  document.getElementById("statusBars").innerHTML = STATUSES.map(st =>
+    `<div class="bar-row"><span>${st}</span><div class="bar"><i style="width:${by(st) / max * 100}%;background:${STATUS_COLORS[st]}"></i></div><b>${by(st)}</b></div>`).join("");
+
+  const days = [...Array(7)].map((_, i) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (6 - i)); return d; });
+  const counts = days.map(d => shipments.filter(s => { const t = s.createdAt?.toDate ? s.createdAt.toDate() : null; return t && t >= d && t < new Date(+d + 864e5); }).length);
+  const mx = Math.max(1, ...counts);
+  document.getElementById("weekBars").innerHTML = days.map((d, i) =>
+    `<div class="wb"><b>${counts[i]}</b><i style="height:${8 + counts[i] / mx * 70}px"></i><span>${d.toLocaleDateString("en-GB", { weekday: "short" })}</span></div>`).join("");
+
+  const attn = [];
+  chats.filter(c => c.needsHuman).slice(0, 4).forEach(c => attn.push(`<div class="att" onclick="switchTab('chats');openChat('${c.id}')">💬 <b>${esc(c.name || "Visitor")}</b> wants a human<small>${esc(c.lastMessage || "")}</small></div>`));
+  contacts.filter(c => !c.read).slice(0, 4).forEach(c => attn.push(`<div class="att" onclick="switchTab('contacts');openContact('${c.id}')">📩 <b>${esc(c.name)}</b><small>${esc((c.message || "").slice(0, 70))}</small></div>`));
+  document.getElementById("attnList").innerHTML = attn.join("") || '<div class="empty-msg" style="padding:18px">All caught up 🎉</div>';
+  document.getElementById("recentShips").innerHTML = shipments.slice(0, 5).map(s =>
+    `<div class="att" onclick="switchTab('shipments');openShipment('${s.id}')"><b>${esc(s.trackingId)}</b> <span style="color:${STATUS_COLORS[s.status] || "inherit"}">${esc(s.status || "")}</span><small>${esc(s.receiverName || s.client || "")} ${s.destination ? "→ " + esc(s.destination) : ""}</small></div>`).join("")
+    || '<div class="empty-msg" style="padding:18px">No shipments yet.</div>';
+}
+
+// ═════════════════════════════════════════════════════
+// LIVE CHAT (admin side)
+// ═════════════════════════════════════════════════════
+const chatName = c => c.name || `Visitor ${c.id.slice(0, 4).toUpperCase()}`;
+const ago = v => {
+  const d = v?.toDate ? v.toDate() : null; if (!d) return "";
+  const m = Math.round((Date.now() - d) / 60000);
+  return m < 1 ? "now" : m < 60 ? m + "m" : m < 1440 ? Math.round(m / 60) + "h" : Math.round(m / 1440) + "d";
+};
+window.renderChatList = function () {
+  const el = document.getElementById("chatList"); if (!el) return;
+  if (!chats.length) { el.innerHTML = '<div class="empty-msg" style="padding:24px">No conversations yet.</div>'; return; }
+  const rank = c => (c.needsHuman ? 0 : c.status === "closed" ? 2 : 1);
+  const sorted = [...chats].sort((a, b) => rank(a) - rank(b));
+  el.innerHTML = sorted.map(c => `
+    <div class="cl-item ${c.id === activeChatId ? "active" : ""}" onclick="openChat('${c.id}')">
+      <div class="cl-top"><b>${esc(chatName(c))}</b><small>${ago(c.lastAt)}</small></div>
+      <div class="cl-msg">${esc(c.lastMessage || "…")}</div>
+      <div class="cl-tags">
+        ${c.needsHuman ? '<span class="tag red">Needs human</span>' : c.mode === "human" ? '<span class="tag amber">Live</span>' : '<span class="tag">Bot</span>'}
+        ${c.status === "closed" ? '<span class="tag">Closed</span>' : ""}
+        ${c.unreadAdmin > 0 ? `<span class="tag blue">${c.unreadAdmin} new</span>` : ""}
+      </div>
+    </div>`).join("");
+};
+
+const QUICK = ["Hello! How can I help you today?", "Please share your 12-character tracking number.", "One moment while I check that for you.", "Your shipment is on its way — thanks for your patience.", "Is there anything else I can help with?"];
+
+window.openChat = async function (id) {
+  activeChatId = id;
+  const c = chats.find(x => x.id === id); if (!c) return;
+  document.getElementById("chatAdmin").classList.add("show-thread");
+  ["ctHead", "ctMsgs", "ctQuick", "ctForm"].forEach(i => document.getElementById(i).classList.remove("hidden"));
+  document.getElementById("chatEmpty").classList.add("hidden");
+  document.getElementById("ctName").textContent = chatName(c);
+  document.getElementById("ctMeta").textContent = `Ref ${id.slice(0, 6).toUpperCase()} · ${c.page || ""} · ${(c.lang || "en").toUpperCase()}`;
+  document.getElementById("ctQuick").innerHTML = QUICK.map((q, i) => `<button type="button" onclick="chatQuick(${i})">${esc(q.slice(0, 28))}…</button>`).join("");
+  if (unsubMsgs) unsubMsgs();
+  const box = document.getElementById("ctMsgs"); box.innerHTML = "";
+  unsubMsgs = onSnapshot(query(collection(db, "chats", id, "messages"), orderBy("at", "asc")), snap => {
+    box.innerHTML = snap.docs.map(d => {
+      const m = d.data(), t = m.at?.toDate ? m.at.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+      return `<div class="cm ${m.from}"><small>${m.from === "admin" ? "You" : m.from === "bot" ? "Bot" : "Visitor"} · ${t}</small>${esc(m.text)}</div>`;
+    }).join("");
+    box.scrollTop = box.scrollHeight;
+    if (snap.docChanges().some(ch => ch.type === "added" && ch.doc.data().from === "visitor") && activeChatId === id) {
+      updateDoc(doc(db, "chats", id), { unreadAdmin: 0 }).catch(() => {});
+    }
+  });
+  if ((c.unreadAdmin || 0) > 0) updateDoc(doc(db, "chats", id), { unreadAdmin: 0 }).catch(() => {});
+  renderChatList();
+};
+window.chatBack = () => { document.getElementById("chatAdmin").classList.remove("show-thread"); };
+window.chatQuick = i => { const inp = document.getElementById("ctInput"); inp.value = QUICK[i]; inp.focus(); };
+window.chatSend = async function (e) {
+  e.preventDefault();
+  const inp = document.getElementById("ctInput"), text = inp.value.trim();
+  if (!text || !activeChatId) return false;
+  inp.value = "";
+  await addDoc(collection(db, "chats", activeChatId, "messages"), { from: "admin", text, at: serverTimestamp() });
+  await updateDoc(doc(db, "chats", activeChatId), { lastMessage: "You: " + text.slice(0, 100), lastAt: serverTimestamp(), mode: "human", needsHuman: false, unreadAdmin: 0, status: "open" });
+  return false;
+};
+window.chatResumeBot = async () => {
+  if (!activeChatId) return;
+  await updateDoc(doc(db, "chats", activeChatId), { mode: "bot", needsHuman: false });
+  await addDoc(collection(db, "chats", activeChatId, "messages"), { from: "admin", text: "You're now back with our automated assistant. Type 'human' any time to reach an agent.", at: serverTimestamp() });
+};
+window.chatClose = async () => { if (activeChatId) await updateDoc(doc(db, "chats", activeChatId), { status: "closed", needsHuman: false }); };
+window.chatDelete = async () => {
+  if (!activeChatId || !confirm("Delete this conversation permanently?")) return;
+  const id = activeChatId;
+  const snap = await getDocs(collection(db, "chats", id, "messages"));
+  await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+  await deleteDoc(doc(db, "chats", id));
+  activeChatId = null; if (unsubMsgs) unsubMsgs();
+  ["ctHead", "ctMsgs", "ctQuick", "ctForm"].forEach(i => document.getElementById(i).classList.add("hidden"));
+  document.getElementById("chatEmpty").classList.remove("hidden"); chatBack();
+};
+
+// ═════════════════════════════════════════════════════
+// SETTINGS (office locations, phone, email, WhatsApp…)
+// ═════════════════════════════════════════════════════
+async function loadSettings() {
+  try {
+    const snap = await getDoc(doc(db, "settings", "site"));
+    if (snap.exists()) SETTINGS = Object.assign(SETTINGS, snap.data());
+  } catch (e) { console.warn("settings", e); }
+}
+function officeRow(o = {}) {
+  return `<div class="office-row"><input placeholder="Label (e.g. Head Office)" value="${escAttr(o.name)}" data-f="name"/>
+    <input placeholder="Full address" value="${escAttr(o.address)}" data-f="address"/>
+    <button class="btn-outline danger" type="button" onclick="this.parentElement.remove()">✕</button></div>`;
+}
+window.addOfficeRow = () => document.getElementById("stOffices").insertAdjacentHTML("beforeend", officeRow());
+async function fillSettingsForm() {
+  await loadSettings();
+  const S = SETTINGS, v = (id, val) => { document.getElementById(id).value = val ?? ""; };
+  v("stEmail", S.email); v("stPhone", S.phone); v("stWa", S.whatsapp); v("stHours", S.hours);
+  v("stWaMsg", S.waMessage); v("stGreeting", S.chatGreeting); v("stSite", S.website); v("stPayInfo", S.payInfo); v("stTerms", S.terms);
+  document.getElementById("stChatOn").checked = S.chatEnabled !== false;
+  document.getElementById("stOffices").innerHTML = (S.offices || []).map(officeRow).join("");
+}
+window.saveSettings = async function () {
+  const g = id => document.getElementById(id).value.trim();
+  const st = document.getElementById("settingsStatus");
+  const offices = [...document.querySelectorAll("#stOffices .office-row")].map(r => ({
+    name: r.querySelector('[data-f="name"]').value.trim(), address: r.querySelector('[data-f="address"]').value.trim()
+  })).filter(o => o.address);
+  const data = {
+    email: g("stEmail"), phone: g("stPhone"), whatsapp: g("stWa"), hours: g("stHours"), offices,
+    waMessage: g("stWaMsg"), chatGreeting: g("stGreeting"), chatEnabled: document.getElementById("stChatOn").checked,
+    website: g("stSite"), payInfo: g("stPayInfo"), terms: g("stTerms"), updatedAt: serverTimestamp()
+  };
+  try {
+    await setDoc(doc(db, "settings", "site"), data, { merge: true });
+    SETTINGS = Object.assign(SETTINGS, data);
+    st.className = "form-status success"; st.textContent = "✅ Saved. The website now shows your new details.";
+  } catch (e) { st.className = "form-status error"; st.textContent = "❌ " + e.message + " (deploy the updated firestore.rules)"; }
+  st.classList.remove("hidden");
+};
+
+// ═════════════════════════════════════════════════════
+// REVIEWS (real customer reviews only)
+// ═════════════════════════════════════════════════════
+async function loadReviewsAdmin() {
+  const el = document.getElementById("reviewList");
+  try {
+    const snap = await getDocs(query(collection(db, "reviews"), orderBy("createdAt", "desc")));
+    el.innerHTML = snap.docs.map(d => { const r = d.data(); return `
+      <div class="submission-card"><div class="sub-header"><span class="sub-name">${esc(r.name)} <small style="color:var(--text3)">${esc(r.role || "")}</small></span><span>${"★".repeat(r.stars || 5)}</span></div>
+      <div class="sub-preview">${esc(r.text)}</div>
+      <div style="margin-top:10px;display:flex;gap:8px"><button class="btn-outline" onclick="toggleReview('${d.id}',${r.visible === false})">${r.visible === false ? "Show" : "Hide"}</button><button class="btn-outline danger" onclick="deleteReview('${d.id}')">Delete</button></div></div>`; }).join("")
+      || '<div class="empty-msg">No reviews yet. The Reviews section stays hidden on your website until you add one.</div>';
+  } catch (e) { el.innerHTML = `<div class="error-msg">❌ ${esc(e.message)}</div>`; }
+}
+window.addReview = async function () {
+  const name = document.getElementById("rvName").value.trim(), text = document.getElementById("rvText").value.trim();
+  if (!name || !text) return alert("Name and review text are required.");
+  await addDoc(collection(db, "reviews"), { name, role: document.getElementById("rvRole").value.trim(), text, stars: +document.getElementById("rvStars").value, visible: true, createdAt: serverTimestamp() });
+  ["rvName", "rvRole", "rvText"].forEach(i => document.getElementById(i).value = ""); loadReviewsAdmin();
+};
+window.toggleReview = async (id, show) => { await updateDoc(doc(db, "reviews", id), { visible: show }); loadReviewsAdmin(); };
+window.deleteReview = async id => { if (confirm("Delete this review?")) { await deleteDoc(doc(db, "reviews", id)); loadReviewsAdmin(); } };
+
+// ═════════════════════════════════════════════════════
+// ORDER RECEIPT  (on-screen preview, PDF, image, print, WhatsApp)
+// ═════════════════════════════════════════════════════
+const TRACK_URL = id => new URL(`track.html?id=${encodeURIComponent(id || "")}`, location.href).href;
+let receiptShipment = null;
+
+function receiptHtml(s) {
+  const S = SETTINGS, o = (S.offices && S.offices[0]) || {};
+  const f = v => esc(v || "—");
+  const site = S.website || location.origin;
+  const eta = s.eta ? new Date(s.eta.toDate ? s.eta.toDate() : s.eta).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "—";
+  const col = STATUS_COLORS[s.status] || "#64748b";
   const photo = (s.photos || [])[0];
-  document.getElementById("receiptPaper").innerHTML = `
-    <div class="r-head">
-      <div class="r-logo">⬡ Swift<b>Freight</b></div>
-      <div class="r-title">Shipment Receipt</div>
+  return `
+  <div class="rc-top">
+    <div class="rc-brand"><div class="rc-logo">⬡ Swift <b>Air Cargo</b></div><small>Global logistics · Air · Sea · Road</small></div>
+    <div class="rc-track"><small>TRACKING NUMBER</small><strong>${esc(s.trackingId)}</strong></div>
+  </div>
+  <div class="rc-company">
+    <div><b>${esc("Swift Air Cargo")}</b></div>
+    ${(S.offices || []).map(x => `<div>📍 ${x.name ? esc(x.name) + ": " : ""}${esc(x.address)}</div>`).join("")}
+    <div>✉ ${esc(S.email)} &nbsp;·&nbsp; ☎ ${esc(S.phone)}</div>
+    <div>🌐 ${esc(site)}</div>
+  </div>
+  <div class="rc-parties">
+    <div><h4>FROM (SENDER)</h4><b>${f(s.senderName || s.client)}</b>
+      <p><u>Address:</u> ${f(s.senderAddress || s.origin)}</p><p><u>Phone No:</u> ${f(s.senderPhone)}</p><p><u>Origin Office:</u> ${f(s.originOffice || s.origin)}</p></div>
+    <div><h4>TO (CONSIGNEE)</h4><b>${f(s.receiverName)}</b>
+      <p><u>Address:</u> ${f(s.receiverAddress || s.destination)}</p><p><u>Phone No:</u> ${f(s.receiverPhone)}</p><p><u>Destination Office:</u> ${f(s.destOffice || s.destination)}</p></div>
+  </div>
+  <div class="rc-mid">
+    <div class="rc-barcode"><svg id="rcBar"></svg><span>${esc(s.trackingId)}</span></div>
+    <div class="rc-info">
+      <p><u>Order ID:</u> ${f(s.orderId)}</p>
+      <p><u>Est. Delivery Date:</u> ${esc(eta)}</p>
+      <p><u>Payment Mode:</u> <b class="rc-pill pay">${f(s.payMode)}</b> · <b class="rc-pill ${/paid/i.test(s.payStatus || "") && !/un|part/i.test(s.payStatus) ? "ok" : "warn"}">${f(s.payStatus || "Pending")}</b></p>
+      <p><u>Mode of Transport:</u> ${f(s.transport || s.service)}</p>
+      <p><u>Issued:</u> ${esc(new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }))}</p>
     </div>
-    <div class="r-meta">
-      <div><small>Receipt no.</small><strong>SFR-${esc(s.trackingId)}</strong></div>
-      <div><small>Issued</small><strong>${esc(fmtDate(new Date()))}</strong></div>
-    </div>
-    <div class="r-tracking"><small>Tracking ID</small><strong>${esc(s.trackingId)}</strong></div>
-    ${row("Client", s.client)}${row("From", s.origin)}${row("To", s.destination)}
-    ${row("Service", s.service)}${row("Weight", s.weight)}${row("Status", s.status)}
-    ${row("ETA", s.eta ? fmtDate(s.eta) : "")}
-    ${photo ? `<img class="r-photo" id="rPhoto" alt="Product photo" crossorigin="anonymous" src="${esc(photo)}" onerror="this.remove()"/>` : ""}
-    <div class="r-total"><span>Freight charge</span><strong>${esc(s.charge || "To be confirmed")}</strong></div>
-    <div class="r-foot">
-      <div id="rQr" aria-label="QR code linking to live tracking"></div>
-      <p>Scan to track this shipment live.<br/>swiftfreightlogistics2026@gmail.com</p>
-    </div>
-    <div class="r-thanks">Thank you for shipping with SwiftFreight.</div>`;
-  const qr = document.getElementById("rQr");
-  if (window.QRCode) new QRCode(qr, { text: trackUrl, width: 92, height: 92, correctLevel: QRCode.CorrectLevel.M });
+  </div>
+  <table class="rc-table"><thead><tr><th>Qty</th><th>Type of Shipment</th><th>Product</th><th>Weight</th><th>Status</th><th>Total Amount</th><th>Custom Clearance Charges</th></tr></thead>
+    <tbody><tr><td>${f(s.qty || "1")}</td><td>${f(s.shipType || s.service)}</td><td>${f(s.product)}</td><td>${f(s.weight)}</td>
+    <td><b class="rc-pill" style="color:${col}">● ${f(s.status)}</b></td><td><b>${f(s.charge)}</b></td><td>${f(s.customsCharge)}</td></tr></tbody></table>
+  ${photo ? `<img class="rc-photo" crossorigin="anonymous" src="${esc(photo)}" alt="Shipment photo" onerror="this.remove()"/>` : ""}
+  <div class="rc-bottom">
+    <div class="rc-pay"><h4>Payment Methods / Instructions</h4><pre>${esc(S.payInfo || "Contact us for payment instructions.")}</pre></div>
+    <div class="rc-qr"><div id="rcQr"></div><small>Scan to track live</small></div>
+  </div>
+  <div class="rc-terms">${esc(S.terms || "")}</div>
+  <div class="rc-sign"><div><span></span>Authorised signature</div><div><span></span>Receiver signature</div></div>
+  <div class="rc-thanks">Thank you for shipping with Swift Air Cargo.</div>`;
+}
+function mountReceipt(el, s) {
+  el.innerHTML = receiptHtml(s);
+  try { if (window.JsBarcode) JsBarcode(el.querySelector("#rcBar"), s.trackingId || "000000000000", { format: "CODE128", height: 44, width: 1.6, displayValue: false, margin: 0 }); } catch (e) {}
+  try { if (window.QRCode) new QRCode(el.querySelector("#rcQr"), { text: TRACK_URL(s.trackingId), width: 84, height: 84, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {}
+}
+window.openReceipt = async function (id) {
+  const s = shipments.find(x => x.id === id); if (!s) return;
+  await loadSettings();
+  receiptShipment = s;
+  mountReceipt(document.getElementById("receiptPaper"), s);
   document.getElementById("receiptMsg").classList.add("hidden");
   document.getElementById("receiptModal").classList.remove("hidden");
 };
 window.closeReceipt = () => document.getElementById("receiptModal").classList.add("hidden");
 
 async function receiptCanvas() {
-  const paper = document.getElementById("receiptPaper");
-  await Promise.all([...paper.querySelectorAll("img")].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })));
-  return html2canvas(paper, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+  // Render a fixed-width copy off-screen so the PDF is identical on phone and desktop
+  const host = document.createElement("div");
+  host.className = "receipt rc-export"; host.style.cssText = "position:fixed;left:-10000px;top:0;width:780px";
+  document.body.appendChild(host);
+  mountReceipt(host, receiptShipment);
+  await new Promise(r => setTimeout(r, 250));
+  await Promise.all([...host.querySelectorAll("img")].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })));
+  const canvas = await html2canvas(host, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+  host.remove();
+  return canvas;
 }
+const rName = ext => `SwiftAirCargo-Receipt-${(receiptShipment?.trackingId || "order").replace(/[^\w-]/g, "_")}.${ext}`;
+function rErr(e) { const m = document.getElementById("receiptMsg"); m.className = "form-status error"; m.textContent = "❌ " + e.message; m.classList.remove("hidden"); }
+
+window.downloadReceiptPdf = async function () {
+  try {
+    if (!window.jspdf || !window.html2canvas) throw new Error("PDF library still loading — try again in a moment.");
+    const canvas = await receiptCanvas();
+    const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+    const pw = 210, ph = 297, m = 8;
+    let w = pw - m * 2, h = canvas.height * w / canvas.width;
+    if (h > ph - m * 2) { h = ph - m * 2; w = canvas.width * h / canvas.height; }
+    pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", (pw - w) / 2, m, w, h);
+    pdf.save(rName("pdf"));
+  } catch (e) { rErr(e); }
+};
 window.downloadReceipt = async function () {
-  const msg = document.getElementById("receiptMsg");
   try {
     if (!window.html2canvas) throw new Error("Image library still loading — try again in a moment.");
     const canvas = await receiptCanvas();
-    const tid = (document.querySelector("#receiptPaper .r-tracking strong")?.textContent || "receipt").replace(/[^\w-]/g, "_");
-    canvas.toBlob(b => {
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(b); a.download = `SwiftFreight-Receipt-${tid}.png`; a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-    }, "image/png");
-  } catch (e) {
-    msg.className = "form-status error"; msg.textContent = `❌ ${e.message}`; msg.classList.remove("hidden");
-  }
+    canvas.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = rName("png"); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }, "image/png");
+  } catch (e) { rErr(e); }
 };
 window.printReceipt = function () {
   document.body.classList.add("printing-receipt");
   const done = () => { document.body.classList.remove("printing-receipt"); window.removeEventListener("afterprint", done); };
   window.addEventListener("afterprint", done);
   window.print();
+};
+window.shareReceiptWa = function () {
+  const s = receiptShipment; if (!s) return;
+  const to = digits(s.receiverPhone || s.senderPhone);
+  const txt = `Swift Air Cargo 📦\nTracking number: ${s.trackingId}\nStatus: ${s.status || "—"}\nTrack live: ${TRACK_URL(s.trackingId)}`;
+  window.open(`https://wa.me/${to}?text=${encodeURIComponent(txt)}`, "_blank", "noopener");
 };

@@ -1,4 +1,4 @@
-// SwiftFreight – extra languages and extra keys (merged by i18n.js)
+// Swift Air Cargo – extra languages and extra keys (merged by i18n.js)
 window.__i18nExtra = {
   en: {
     nav_reviews: "Reviews", reviews_tag: "CLIENT FEEDBACK",
@@ -31,7 +31,7 @@ window.__i18nExtra = {
     nav_home: "Início", nav_services: "Serviços", nav_about: "Sobre", nav_tracking: "Rastrear", nav_contact: "Fale Conosco", nav_reviews: "Avaliações",
     hero_badge: "🌍 Confiança mundial desde 2010",
     hero_title: "Envie qualquer coisa,\nPara qualquer lugar.",
-    hero_sub: "A SwiftFreight oferece logística de precisão em mais de 180 países. Ar, mar e estrada — movemos o seu mundo com rapidez e confiabilidade.",
+    hero_sub: "A Swift Air Cargo oferece logística de precisão em mais de 180 países. Ar, mar e estrada — movemos o seu mundo com rapidez e confiabilidade.",
     hero_cta1: "Pedir cotação", hero_cta2: "Rastrear envio",
     stat1: "Países", stat2: "Entregas/mês", stat3: "Pontualidade",
     services_tag: "O QUE FAZEMOS", services_title: "Serviços Logísticos Completos",
@@ -48,7 +48,7 @@ window.__i18nExtra = {
     track_placeholder: "Código de rastreamento (12 caracteres)", track_btn: "Rastrear",
     track_hint: "Seu código tem 12 letras e números, ex.: 7K2M9QX4B8TD.",
     track_empty: "⚠️ Digite seu código de rastreamento.", track_example: "Exemplo de trajeto",
-    why_tag: "POR QUE SWIFTFREIGHT", why_title: "O parceiro de frete em que você pode confiar",
+    why_tag: "POR QUE SWIFT AIR CARGO", why_title: "O parceiro de frete em que você pode confiar",
     why1_title: "Muito rápido", why1_desc: "Processamento no mesmo dia e operação 24/7 para que sua carga nunca espere.",
     why2_title: "Totalmente segurado", why2_desc: "Cada envio é coberto por seguro de carga abrangente em todo o mundo.",
     why3_title: "Rastreamento ao vivo", why3_desc: "Visibilidade GPS em tempo real em cada envio, a cada quilômetro.",
@@ -57,7 +57,7 @@ window.__i18nExtra = {
     reviews_sub: "O que importadores, exportadores e lojistas dizem após o primeiro envio.",
     reviews_note: "Depoimentos de exemplo exibidos para demonstração.",
     cta_title: "Pronto para enviar com mais inteligência?",
-    cta_sub: "Junte-se a mais de 10.000 empresas que confiam na SwiftFreight.", cta_btn: "Comece hoje",
+    cta_sub: "Junte-se a mais de 10.000 empresas que confiam na Swift Air Cargo.", cta_btn: "Comece hoje",
     footer_desc: "Movendo a carga do mundo com precisão e velocidade desde 2010.",
     footer_company: "Empresa", footer_about: "Sobre nós", footer_services: "Serviços", footer_contact: "Contato",
     footer_services_title: "Serviços", footer_reach: "Fale conosco", footer_rights: "Todos os direitos reservados.",
@@ -73,7 +73,7 @@ window.__i18nExtra = {
     nav_home: "Start", nav_services: "Leistungen", nav_about: "Über uns", nav_tracking: "Sendungsverfolgung", nav_contact: "Kontakt", nav_reviews: "Bewertungen",
     hero_badge: "🌍 Weltweit vertraut seit 2010",
     hero_title: "Alles bewegen,\nÜberall hin.",
-    hero_sub: "SwiftFreight bietet präzise Logistik in über 180 Ländern. Luft, See, Straße — wir bewegen Ihre Welt schnell und zuverlässig.",
+    hero_sub: "Swift Air Cargo bietet präzise Logistik in über 180 Ländern. Luft, See, Straße — wir bewegen Ihre Welt schnell und zuverlässig.",
     hero_cta1: "Angebot anfordern", hero_cta2: "Sendung verfolgen",
     stat1: "Länder", stat2: "Lieferungen/Monat", stat3: "Pünktlichkeit",
     services_tag: "UNSERE LEISTUNGEN", services_title: "Komplette Logistikdienstleistungen",
@@ -90,7 +90,7 @@ window.__i18nExtra = {
     track_placeholder: "Sendungsnummer (12 Zeichen)", track_btn: "Jetzt verfolgen",
     track_hint: "Ihre Sendungsnummer hat 12 Buchstaben und Ziffern, z. B. 7K2M9QX4B8TD.",
     track_empty: "⚠️ Bitte geben Sie Ihre Sendungsnummer ein.", track_example: "Beispielroute",
-    why_tag: "WARUM SWIFTFREIGHT", why_title: "Der Frachtpartner, dem Sie vertrauen können",
+    why_tag: "WARUM SWIFT AIR CARGO", why_title: "Der Frachtpartner, dem Sie vertrauen können",
     why1_title: "Blitzschnell", why1_desc: "Bearbeitung am selben Tag und 24/7-Betrieb — Ihre Fracht wartet nie.",
     why2_title: "Voll versichert", why2_desc: "Jede Sendung ist weltweit durch eine umfassende Transportversicherung abgedeckt.",
     why3_title: "Live-Tracking", why3_desc: "GPS-Echtzeitüberblick über jede Sendung, auf jedem Kilometer.",
@@ -99,7 +99,7 @@ window.__i18nExtra = {
     reviews_sub: "Was Importeure, Exporteure und Online-Händler nach ihrer ersten Sendung sagen.",
     reviews_note: "Beispielhafte Kundenstimmen zu Demonstrationszwecken.",
     cta_title: "Bereit, smarter zu versenden?",
-    cta_sub: "Über 10.000 Unternehmen vertrauen SwiftFreight bei ihrer Logistik.", cta_btn: "Jetzt starten",
+    cta_sub: "Über 10.000 Unternehmen vertrauen Swift Air Cargo bei ihrer Logistik.", cta_btn: "Jetzt starten",
     footer_desc: "Wir bewegen die Fracht der Welt mit Präzision und Tempo seit 2010.",
     footer_company: "Unternehmen", footer_about: "Über uns", footer_services: "Leistungen", footer_contact: "Kontakt",
     footer_services_title: "Leistungen", footer_reach: "Kontakt aufnehmen", footer_rights: "Alle Rechte vorbehalten.",
@@ -157,7 +157,7 @@ window.__i18nExtra = {
     nav_home: "首页", nav_services: "服务", nav_about: "关于我们", nav_tracking: "追踪", nav_contact: "联系我们", nav_reviews: "客户评价",
     hero_badge: "🌍 自2010年起受全球信赖",
     hero_title: "运送一切，\n通达全球。",
-    hero_sub: "SwiftFreight 在180多个国家提供精准物流服务。空运、海运、陆运——快速、可靠地运送您的货物。",
+    hero_sub: "Swift Air Cargo 在180多个国家提供精准物流服务。空运、海运、陆运——快速、可靠地运送您的货物。",
     hero_cta1: "获取报价", hero_cta2: "追踪货件",
     stat1: "国家", stat2: "每月配送", stat3: "准时率",
     services_tag: "我们的服务", services_title: "端到端物流服务",
@@ -174,7 +174,7 @@ window.__i18nExtra = {
     track_placeholder: "输入12位运单号", track_btn: "立即追踪",
     track_hint: "运单号由12位字母和数字组成，例如 7K2M9QX4B8TD。",
     track_empty: "⚠️ 请输入运单号。", track_example: "示例行程",
-    why_tag: "为什么选择 SWIFTFREIGHT", why_title: "值得信赖的货运伙伴",
+    why_tag: "为什么选择 SWIFT AIR CARGO", why_title: "值得信赖的货运伙伴",
     why1_title: "极速处理", why1_desc: "当日处理、全天候运营，让您的货物不再等待。",
     why2_title: "全程保险", why2_desc: "每票货物均享全球货运综合保险。",
     why3_title: "实时追踪", why3_desc: "每票货物、每一公里都有GPS实时可视。",
@@ -183,7 +183,7 @@ window.__i18nExtra = {
     reviews_sub: "进口商、出口商和网店卖家在首次发货后的评价。",
     reviews_note: "以上为演示用示例评价。",
     cta_title: "准备好更智能地发货了吗？",
-    cta_sub: "加入10,000多家信赖 SwiftFreight 的企业。", cta_btn: "立即开始",
+    cta_sub: "加入10,000多家信赖 Swift Air Cargo 的企业。", cta_btn: "立即开始",
     footer_desc: "自2010年起，以精准与速度运送全球货物。",
     footer_company: "公司", footer_about: "关于我们", footer_services: "服务", footer_contact: "联系",
     footer_services_title: "服务", footer_reach: "联系我们", footer_rights: "版权所有。",
@@ -196,3 +196,14 @@ window.__i18nExtra = {
     info_hours_val: "全天候——我们从不停歇。"
   }
 };
+
+// Human-help button labels
+Object.entries({
+  en: ["Talk to a human about your order process", "Chat on WhatsApp"],
+  fr: ["Parler à un humain à propos de votre commande", "Discuter sur WhatsApp"],
+  es: ["Hablar con una persona sobre su pedido", "Chatear por WhatsApp"],
+  pt: ["Falar com uma pessoa sobre o seu pedido", "Conversar no WhatsApp"],
+  de: ["Mit einem Menschen über Ihre Bestellung sprechen", "Per WhatsApp chatten"],
+  ar: ["تحدث مع موظف بشأن طلبك", "تواصل عبر واتساب"],
+  zh: ["就您的订单流程联系真人客服", "通过 WhatsApp 聊天"]
+}).forEach(([l, [a, b]]) => Object.assign(window.__i18nExtra[l], { talk_human: a, talk_human_short: b }));

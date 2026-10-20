@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Track Your Shipment – SwiftFreight</title>
-    <meta name="description" content="SwiftFreight – global air, sea and road freight, customs clearance and live shipment tracking in 180+ countries."/>
+  <title>Track Your Shipment – Swift Air Cargo</title>
+    <meta name="description" content="Swift Air Cargo – global air, sea and road freight, customs clearance and live shipment tracking in 180+ countries."/>
   <meta name="theme-color" content="#080809"/>
-  <meta property="og:title" content="SwiftFreight – Global Logistics"/>
+  <meta property="og:title" content="Swift Air Cargo – Global Logistics"/>
   <meta property="og:description" content="Air, sea and road freight with live tracking worldwide."/>
   <meta property="og:type" content="website"/>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23080809%27/%3E%3Cpath d=%27M32 10l18 10v24L32 54 14 44V20z%27 fill=%27none%27 stroke=%27%23f59e0b%27 stroke-width=%276%27/%3E%3C/svg%3E"/>
@@ -17,6 +17,7 @@
   <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <link rel="stylesheet" href="enhance.css"/>
+  <link rel="stylesheet" href="chat.css"/>
 </head>
 <body>
   <!-- NAV -->
@@ -24,7 +25,7 @@
     <div class="nav-inner">
       <a href="index.html" class="logo">
         <span class="logo-icon">⬡</span>
-        Swift<span class="logo-accent">Freight</span>
+        Swift <span class="logo-accent">Air Cargo</span>
       </a>
       <ul class="nav-links" id="navLinks">
         <li><a href="index.html" data-i18n="nav_home">Home</a></li>
@@ -55,6 +56,7 @@
     </div>
   </section>
 
+  <div style="text-align:center;margin:-20px 0 10px"><a class="btn-wa" data-wa href="#"><span>💬</span> <span data-i18n="talk_human">Talk to a human about your order process</span></a></div>
   <!-- RESULTS -->
   <section class="track-page-body">
     <div id="tpResult"></div>
@@ -64,7 +66,7 @@
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-brand">
-        <span class="logo">⬡ Swift<span class="logo-accent">Freight</span></span>
+        <span class="logo">⬡ Swift <span class="logo-accent">Air Cargo</span></span>
         <p data-i18n="footer_desc">Moving the world's cargo with precision and speed since 2010.</p>
       </div>
       <div class="footer-links">
@@ -82,19 +84,21 @@
       </div>
       <div class="footer-contact">
         <h4 data-i18n="footer_reach">Get in Touch</h4>
-        <p>📧 swiftfreightlogistics2026@gmail.com</p>
-        <p>📱 Signal: swiftfreight.43</p>
-        <p>📍 New York City, USA</p>
+        <p>📧 <a data-site="email" href="mailto:swiftfreightlogistics2026@gmail.com">swiftfreightlogistics2026@gmail.com</a></p>
+        <p>📞 <a data-site="phone" href="tel:+31657446248">+31657446248</a></p>
+        <p>💬 <a data-wa href="#" data-i18n="talk_human_short">Chat on WhatsApp</a></p>
+        <div data-site="offices"><p>📍 New York City, USA</p></div>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>© <span data-year>2026</span> SwiftFreight. <span data-i18n="footer_rights">All rights reserved.</span></p>
+      <p>© <span data-year>2026</span> Swift Air Cargo. <span data-i18n="footer_rights">All rights reserved.</span></p>
     </div>
   </footer>
 
   <script src="i18n-more.js"></script>
   <script src="i18n.js"></script>
   <script type="module" src="main.js"></script>
+  <script type="module" src="site.js"></script>
   <script type="module" src="track.js"></script>
 </body>
 </html>

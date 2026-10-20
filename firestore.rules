@@ -1,10 +1,38 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAdmin() { return request.auth != null; }
+
     // Tracking page looks shipments up by ID, so reads are public; only signed-in admins write
-    match /shipments/{id} { allow read: if true; allow write: if request.auth != null; }
+    match /shipments/{id} { allow read: if true; allow write: if isAdmin(); }
+
     // Anyone can submit the contact form; only admins can read or manage messages
-    match /contacts/{id} { allow create: if true; allow read, update, delete: if request.auth != null; }
+    match /contacts/{id} { allow create: if true; allow read, update, delete: if isAdmin(); }
+
+    // Website settings (contact details, offices, WhatsApp) – public read, admin write
+    match /settings/{id} { allow read: if true; allow write: if isAdmin(); }
+
+    // Customer reviews added by admins – public read
+    match /reviews/{id} { allow read: if true; allow write: if isAdmin(); }
+
+    // Live chat. The chat ID is a random secret kept in the visitor's browser.
+    match /chats/{chatId} {
+      allow create: if true;
+      allow get: if true;
+      allow list, delete: if isAdmin();
+      allow update: if isAdmin() ||
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['mode','needsHuman','lastMessage','lastAt','unreadAdmin','status','name']);
+      match /messages/{m} {
+        allow read: if true;
+        allow create: if isAdmin() ||
+          (request.resource.data.from in ['visitor','bot'] &&
+           request.resource.data.text is string &&
+           request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000);
+        allow update, delete: if isAdmin();
+      }
+    }
+
     match /{document=**} { allow read, write: if false; }
   }
 }

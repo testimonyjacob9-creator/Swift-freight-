@@ -1,5 +1,5 @@
 // =====================================================
-// SWIFTFREIGHT – TRACK.JS
+// SWIFT AIR CARGO – TRACK.JS
 // Full-page animated shipment tracking results
 // =====================================================
 

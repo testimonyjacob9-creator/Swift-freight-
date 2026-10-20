@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SwiftFreight – Global Logistics Solutions</title>
-    <meta name="description" content="SwiftFreight – global air, sea and road freight, customs clearance and live shipment tracking in 180+ countries."/>
+  <title>Swift Air Cargo – Global Logistics Solutions</title>
+    <meta name="description" content="Swift Air Cargo – global air, sea and road freight, customs clearance and live shipment tracking in 180+ countries."/>
   <meta name="theme-color" content="#080809"/>
-  <meta property="og:title" content="SwiftFreight – Global Logistics"/>
+  <meta property="og:title" content="Swift Air Cargo – Global Logistics"/>
   <meta property="og:description" content="Air, sea and road freight with live tracking worldwide."/>
   <meta property="og:type" content="website"/>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23080809%27/%3E%3Cpath d=%27M32 10l18 10v24L32 54 14 44V20z%27 fill=%27none%27 stroke=%27%23f59e0b%27 stroke-width=%276%27/%3E%3C/svg%3E"/>
@@ -16,6 +16,7 @@
   <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <link rel="stylesheet" href="enhance.css"/>
+  <link rel="stylesheet" href="chat.css"/>
 </head>
 <body>
   <!-- NAV -->
@@ -23,14 +24,14 @@
     <div class="nav-inner">
       <a href="index.html" class="logo">
         <span class="logo-icon">⬡</span>
-        Swift<span class="logo-accent">Freight</span>
+        Swift <span class="logo-accent">Air Cargo</span>
       </a>
       <ul class="nav-links" id="navLinks">
         <li><a href="index.html" class="active" data-i18n="nav_home">Home</a></li>
         <li><a href="#services" data-i18n="nav_services">Services</a></li>
         <li><a href="#about" data-i18n="nav_about">About</a></li>
         <li><a href="#tracking" data-i18n="nav_tracking">Track</a></li>
-        <li><a href="#reviews" data-i18n="nav_reviews">Reviews</a></li>
+        <li class="nav-reviews hidden"><a href="#reviews" data-i18n="nav_reviews">Reviews</a></li>
         <li><a href="contact.html" class="btn-nav" data-i18n="nav_contact">Contact Us</a></li>
       </ul>
       <div class="nav-right">
@@ -54,7 +55,7 @@
     <div class="hero-content">
       <div class="hero-badge" data-i18n="hero_badge">🌍 Trusted Worldwide Since 2010</div>
       <h1 class="hero-title" data-i18n="hero_title">Move Anything,<br/><span class="accent">Anywhere.</span></h1>
-      <p class="hero-sub" data-i18n="hero_sub">SwiftFreight delivers precision logistics across 180+ countries. Air, sea, road — we move your world with speed and reliability.</p>
+      <p class="hero-sub" data-i18n="hero_sub">Swift Air Cargo delivers precision logistics across 180+ countries. Air, sea, road — we move your world with speed and reliability.</p>
       <div class="hero-cta">
         <a href="contact.html" class="btn-primary" data-i18n="hero_cta1">Get a Quote</a>
         <a href="#tracking" class="btn-outline" data-i18n="hero_cta2">Track Shipment</a>
@@ -158,6 +159,7 @@
             <button onclick="trackShipment()" data-i18n="track_btn">Track Now</button>
           </div>
           <div id="trackResult" class="track-result hidden"></div>
+          <a class="btn-wa" data-wa data-wa-msg="Hello Swift Air Cargo 👋 I need help with my order. I'd like to talk to a human about my order processes." href="#"><span>💬</span> <span data-i18n="talk_human">Talk to a human about your order process</span></a>
           <p class="track-hint" data-i18n="track_hint">Your tracking number is 12 letters and numbers, e.g. 7K2M9QX4B8TD.</p>
         </div>
         <div class="track-right reveal from-right">
@@ -178,7 +180,7 @@
   <section class="why-us" id="about">
     <div class="container">
       <div class="section-header reveal">
-        <p class="section-tag" data-i18n="why_tag">WHY SWIFTFREIGHT</p>
+        <p class="section-tag" data-i18n="why_tag">WHY SWIFT AIR CARGO</p>
         <h2 data-i18n="why_title">The Freight Partner You Can Trust</h2>
       </div>
       <div class="why-grid">
@@ -190,65 +192,14 @@
     </div>
   </section>
 
-  <!-- REVIEWS -->
-  <section class="reviews" id="reviews" aria-labelledby="reviewsTitle">
+  <!-- REVIEWS (filled from the admin portal; hidden until real reviews are added) -->
+  <section class="reviews hidden" id="reviews" aria-labelledby="reviewsTitle">
     <div class="container">
-      <div class="section-header reveal">
+      <div class="section-header">
         <p class="section-tag" data-i18n="reviews_tag">CLIENT FEEDBACK</p>
         <h2 id="reviewsTitle" data-i18n="reviews_title">Trusted by shippers who can't afford delays</h2>
-        <p class="section-sub" data-i18n="reviews_sub">What importers, exporters and online sellers say after their first shipment.</p>
       </div>
-      <div class="reviews-grid">
-        <figure class="review-card reveal">
-          <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
-          <blockquote>Our fabric shipments used to arrive with no warning. Now every handover shows up in tracking and the delivery date has held three months running.</blockquote>
-          <figcaption>
-            <span class="review-avatar" data-initials="AO"><img loading="lazy" width="48" height="48" alt="Portrait of Amara Okafor" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&crop=faces&w=96&h=96&q=75" onerror="this.remove()"/></span>
-            <span><strong>Amara Okafor</strong><small>Operations Manager, Lagos Textiles</small></span>
-          </figcaption>
-        </figure>
-        <figure class="review-card reveal">
-          <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
-          <blockquote>Customs paperwork was handled before the cargo landed. That alone saved us a week on a time-critical machinery order.</blockquote>
-          <figcaption>
-            <span class="review-avatar" data-initials="DW"><img loading="lazy" width="48" height="48" alt="Portrait of Daniel Weber" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&crop=faces&w=96&h=96&q=75" onerror="this.remove()"/></span>
-            <span><strong>Daniel Weber</strong><small>Procurement Lead, Weber Engineering</small></span>
-          </figcaption>
-        </figure>
-        <figure class="review-card reveal">
-          <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
-          <blockquote>Fragile pieces, three countries, zero breakages. The photos at pickup gave my customers real confidence.</blockquote>
-          <figcaption>
-            <span class="review-avatar" data-initials="SM"><img loading="lazy" width="48" height="48" alt="Portrait of Sofia Martins" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&crop=faces&w=96&h=96&q=75" onerror="this.remove()"/></span>
-            <span><strong>Sofia Martins</strong><small>Founder, Casa Martins Ceramics</small></span>
-          </figcaption>
-        </figure>
-        <figure class="review-card reveal">
-          <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
-          <blockquote>Temperature logs on the cold-chain run were complete and on time, which is what our auditors look at first.</blockquote>
-          <figcaption>
-            <span class="review-avatar" data-initials="JM"><img loading="lazy" width="48" height="48" alt="Portrait of James Mensah" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&crop=faces&w=96&h=96&q=75" onerror="this.remove()"/></span>
-            <span><strong>James Mensah</strong><small>Supply Chain Director, Accra Pharma</small></span>
-          </figcaption>
-        </figure>
-        <figure class="review-card reveal">
-          <div class="review-stars" role="img" aria-label="4 out of 5 stars">★★★★☆</div>
-          <blockquote>Quotes are clear and the team answers quickly. One delay at a hub, but we were told the same day, not after.</blockquote>
-          <figcaption>
-            <span class="review-avatar" data-initials="EP"><img loading="lazy" width="48" height="48" alt="Portrait of Elena Petrova" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&crop=faces&w=96&h=96&q=75" onerror="this.remove()"/></span>
-            <span><strong>Elena Petrova</strong><small>Logistics Coordinator, Nordic Outdoor</small></span>
-          </figcaption>
-        </figure>
-        <figure class="review-card reveal">
-          <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
-          <blockquote>I send parcels weekly. The live map means I stop getting 'where is my order?' emails.</blockquote>
-          <figcaption>
-            <span class="review-avatar" data-initials="MR"><img loading="lazy" width="48" height="48" alt="Portrait of Marcus Reid" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&crop=faces&w=96&h=96&q=75" onerror="this.remove()"/></span>
-            <span><strong>Marcus Reid</strong><small>E-commerce Owner, Reid & Co</small></span>
-          </figcaption>
-        </figure>
-      </div>
-      <p class="reviews-note"><span data-i18n="reviews_note">Sample testimonials shown for demonstration.</span> Portraits via <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a> (free Unsplash licence).</p>
+      <div class="reviews-grid" id="reviewsGrid"></div>
     </div>
   </section>
 
@@ -256,8 +207,9 @@
   <section class="cta-banner">
     <div class="cta-inner reveal zoom">
       <h2 data-i18n="cta_title">Ready to Ship Smarter?</h2>
-      <p data-i18n="cta_sub">Join 10,000+ businesses that trust SwiftFreight for their logistics needs.</p>
+      <p data-i18n="cta_sub">Join 10,000+ businesses that trust Swift Air Cargo for their logistics needs.</p>
       <a href="contact.html" class="btn-primary large" data-i18n="cta_btn">Get Started Today</a>
+      <a class="btn-wa" data-wa href="#" style="margin-left:12px"><span>💬</span> <span data-i18n="talk_human">Talk to a human about your order process</span></a>
     </div>
   </section>
 
@@ -265,7 +217,7 @@
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-brand">
-        <span class="logo">⬡ Swift<span class="logo-accent">Freight</span></span>
+        <span class="logo">⬡ Swift <span class="logo-accent">Air Cargo</span></span>
         <p data-i18n="footer_desc">Moving the world's cargo with precision and speed since 2010.</p>
       </div>
       <div class="footer-links">
@@ -283,18 +235,20 @@
       </div>
       <div class="footer-contact">
         <h4 data-i18n="footer_reach">Get in Touch</h4>
-        <p>📧 swiftfreightlogistics2026@gmail.com</p>
-        <p>📱 Signal: swiftfreight.43</p>
-        <p>📍 New York City, USA</p>
+        <p>📧 <a data-site="email" href="mailto:swiftfreightlogistics2026@gmail.com">swiftfreightlogistics2026@gmail.com</a></p>
+        <p>📞 <a data-site="phone" href="tel:+31657446248">+31657446248</a></p>
+        <p>💬 <a data-wa href="#" data-i18n="talk_human_short">Chat on WhatsApp</a></p>
+        <div data-site="offices"><p>📍 New York City, USA</p></div>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>© <span data-year>2026</span> SwiftFreight. <span data-i18n="footer_rights">All rights reserved.</span></p>
+      <p>© <span data-year>2026</span> Swift Air Cargo. <span data-i18n="footer_rights">All rights reserved.</span></p>
     </div>
   </footer>
 
   <script src="i18n-more.js"></script>
   <script src="i18n.js"></script>
   <script type="module" src="main.js"></script>
+  <script type="module" src="site.js"></script>
 </body>
 </html>

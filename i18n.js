@@ -1,5 +1,5 @@
 // =====================================================
-// SWIFTFREIGHT – I18N.JS
+// SWIFT AIR CARGO – I18N.JS
 // Lightweight i18n: EN / FR / ES
 // =====================================================
 
@@ -13,7 +13,7 @@ const translations = {
 
     hero_badge:  "🌍 Trusted Worldwide Since 2010",
     hero_title:  "Move Anything,\nAnywhere.",
-    hero_sub:    "SwiftFreight delivers precision logistics across 180+ countries. Air, sea, road — we move your world with speed and reliability.",
+    hero_sub:    "Swift Air Cargo delivers precision logistics across 180+ countries. Air, sea, road — we move your world with speed and reliability.",
     hero_cta1:   "Get a Quote",
     hero_cta2:   "Track Shipment",
     stat1: "Countries",
@@ -43,7 +43,7 @@ const translations = {
     track_placeholder: "Enter 12-character tracking number",
     track_btn:   "Track Now",
 
-    why_tag:   "WHY SWIFTFREIGHT",
+    why_tag:   "WHY SWIFT AIR CARGO",
     why_title: "The Freight Partner You Can Trust",
     why1_title: "Lightning Fast",
     why1_desc:  "Same-day processing and 24/7 operations ensure your cargo never waits.",
@@ -55,7 +55,7 @@ const translations = {
     why4_desc:  "180+ country coverage with trusted local partners in every region.",
 
     cta_title: "Ready to Ship Smarter?",
-    cta_sub:   "Join 10,000+ businesses that trust SwiftFreight for their logistics needs.",
+    cta_sub:   "Join 10,000+ businesses that trust Swift Air Cargo for their logistics needs.",
     cta_btn:   "Get Started Today",
 
     footer_desc:          "Moving the world's cargo with precision and speed since 2010.",
@@ -94,7 +94,7 @@ const translations = {
 
     hero_badge:  "🌍 Reconnu Mondialement depuis 2010",
     hero_title:  "Expédiez n'importe quoi,\nPartout.",
-    hero_sub:    "SwiftFreight offre une logistique de précision dans 180+ pays. Air, mer, route — nous déplaçons votre monde avec vitesse et fiabilité.",
+    hero_sub:    "Swift Air Cargo offre une logistique de précision dans 180+ pays. Air, mer, route — nous déplaçons votre monde avec vitesse et fiabilité.",
     hero_cta1:   "Obtenir un devis",
     hero_cta2:   "Suivre l'expédition",
     stat1: "Pays",
@@ -124,7 +124,7 @@ const translations = {
     track_placeholder: "Numéro de suivi à 12 caractères",
     track_btn:   "Suivre",
 
-    why_tag:   "POURQUOI SWIFTFREIGHT",
+    why_tag:   "POURQUOI SWIFT AIR CARGO",
     why_title: "Le Partenaire Logistique de Confiance",
     why1_title: "Ultra Rapide",
     why1_desc:  "Traitement le jour même et opérations 24/7 pour que vos marchandises n'attendent jamais.",
@@ -136,7 +136,7 @@ const translations = {
     why4_desc:  "Couverture de 180+ pays avec des partenaires locaux de confiance.",
 
     cta_title: "Prêt à expédier plus intelligemment ?",
-    cta_sub:   "Rejoignez 10 000+ entreprises qui font confiance à SwiftFreight.",
+    cta_sub:   "Rejoignez 10 000+ entreprises qui font confiance à Swift Air Cargo.",
     cta_btn:   "Commencez Aujourd'hui",
 
     footer_desc:          "Transportant les marchandises mondiales avec précision depuis 2010.",
@@ -175,7 +175,7 @@ const translations = {
 
     hero_badge:  "🌍 Confianza Mundial desde 2010",
     hero_title:  "Mueve Cualquier Cosa,\nA Cualquier Lugar.",
-    hero_sub:    "SwiftFreight ofrece logística de precisión en más de 180 países. Aéreo, marítimo, terrestre — movemos tu mundo con velocidad y confiabilidad.",
+    hero_sub:    "Swift Air Cargo ofrece logística de precisión en más de 180 países. Aéreo, marítimo, terrestre — movemos tu mundo con velocidad y confiabilidad.",
     hero_cta1:   "Solicitar cotización",
     hero_cta2:   "Rastrear envío",
     stat1: "Países",
@@ -205,7 +205,7 @@ const translations = {
     track_placeholder: "Número de seguimiento de 12 caracteres",
     track_btn:   "Rastrear",
 
-    why_tag:   "POR QUÉ SWIFTFREIGHT",
+    why_tag:   "POR QUÉ SWIFT AIR CARGO",
     why_title: "El Socio Logístico en el que Puedes Confiar",
     why1_title: "Ultrarrápido",
     why1_desc:  "Procesamiento el mismo día y operaciones 24/7 para que tu carga nunca espere.",
@@ -217,7 +217,7 @@ const translations = {
     why4_desc:  "Cobertura de más de 180 países con socios locales de confianza en cada región.",
 
     cta_title: "¿Listo para enviar de forma más inteligente?",
-    cta_sub:   "Únete a más de 10,000 empresas que confían en SwiftFreight.",
+    cta_sub:   "Únete a más de 10,000 empresas que confían en Swift Air Cargo.",
     cta_btn:   "Empieza Hoy",
 
     footer_desc:          "Transportando la carga mundial con precisión y velocidad desde 2010.",

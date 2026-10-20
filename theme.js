@@ -1,4 +1,4 @@
-// SwiftFreight – theme (light/dark) + small UX helpers. Loaded in <head>.
+// Swift Air Cargo – theme (light/dark) + small UX helpers. Loaded in <head>.
 (function () {
   var root = document.documentElement;
   root.classList.add("js");
@@ -11,6 +11,7 @@
     if (m) m.setAttribute("content", t === "light" ? "#f6f7fb" : "#080809");
   }
   apply(saved || (prefersDark ? "dark" : "light"));
+  window.sfToggleTheme = function () { var n = root.getAttribute("data-theme") === "light" ? "dark" : "light"; apply(n); try { localStorage.setItem("sf_theme", n); } catch (e) {} };
 
   document.addEventListener("DOMContentLoaded", function () {
     var host = document.querySelector(".nav-right");

@@ -1,5 +1,5 @@
 // =====================================================
-// SWIFTFREIGHT – MAIN.JS
+// SWIFT AIR CARGO – MAIN.JS
 // Shared nav/scroll behavior across all pages.
 // Actual shipment lookup + rendering lives in track.js
 // =====================================================

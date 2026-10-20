@@ -1,0 +1,34 @@
+/* Swift Air Cargo – live chat widget + WhatsApp buttons */
+.btn-wa { display: inline-flex; align-items: center; gap: 8px; background: #25d366; color: #06361a !important; font-weight: 700; font-size: .9rem; padding: 12px 20px; border-radius: 50px; margin-top: 14px; transition: transform .2s, box-shadow .2s; text-decoration: none; }
+.btn-wa:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(37,211,102,.35); }
+.cta-inner .btn-wa { margin-top: 0; }
+
+#sfChatBtn { position: fixed; right: 18px; bottom: 18px; z-index: 1200; width: 58px; height: 58px; border-radius: 50%; border: 0; cursor: pointer; background: var(--accent); color: #fff; font-size: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,.35); transition: transform .2s; }
+#sfChatBtn:hover { transform: scale(1.08); }
+#sfChatBtn .dot { position: absolute; top: 4px; right: 4px; width: 14px; height: 14px; border-radius: 50%; background: #ef4444; border: 2px solid var(--bg); display: none; }
+#sfChatBtn.has-new .dot { display: block; }
+#sfChat { position: fixed; right: 18px; bottom: 90px; z-index: 1201; width: 370px; max-width: calc(100vw - 24px); height: 540px; max-height: calc(100vh - 110px); background: var(--surface); color: var(--text); border: 1px solid var(--border2); border-radius: 18px; box-shadow: var(--shadow); display: none; flex-direction: column; overflow: hidden; }
+#sfChat.open { display: flex; animation: chatIn .25s ease; }
+@keyframes chatIn { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+.sfc-head { background: var(--accent); color: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+.sfc-head strong { display: block; font-size: .95rem; }
+.sfc-head small { opacity: .9; font-size: .74rem; }
+.sfc-head .sfc-x { margin-left: auto; background: none; border: 0; color: #fff; font-size: 1.2rem; cursor: pointer; }
+.sfc-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; background: var(--bg); }
+.sfc-msg { max-width: 84%; padding: 9px 13px; border-radius: 14px; font-size: .88rem; line-height: 1.45; white-space: pre-wrap; word-wrap: break-word; }
+.sfc-msg.bot, .sfc-msg.admin { background: var(--surface2); border-bottom-left-radius: 4px; align-self: flex-start; }
+.sfc-msg.admin { border-left: 3px solid var(--accent); }
+.sfc-msg.visitor { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; align-self: flex-end; }
+.sfc-msg small { display: block; font-size: .66rem; opacity: .7; margin-bottom: 2px; font-weight: 600; }
+.sfc-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.sfc-quick button, .sfc-quick a { background: var(--surface); border: 1px solid var(--accent); color: var(--accent); border-radius: 20px; padding: 7px 12px; font: 600 .78rem var(--font-body); cursor: pointer; text-decoration: none; }
+.sfc-quick a.wa { background: #25d366; border-color: #25d366; color: #06361a; }
+.sfc-quick button:hover { background: var(--accent); color: #fff; }
+.sfc-foot { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--border); background: var(--surface); }
+.sfc-foot input { flex: 1; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); border-radius: 22px; padding: 10px 14px; font: .9rem var(--font-body); outline: none; min-width: 0; }
+.sfc-foot button { background: var(--accent); border: 0; color: #fff; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 1rem; }
+.sfc-typing { align-self: flex-start; font-size: .75rem; color: var(--text3); }
+@media (max-width: 520px) {
+  #sfChat { right: 0; bottom: 0; width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  #sfChatBtn { right: 14px; bottom: 14px; }
+}
