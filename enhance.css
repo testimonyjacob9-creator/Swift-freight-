@@ -110,3 +110,15 @@ html { overflow-x: hidden; }
 }
 html.js .reveal.in.from-left, html.js .reveal.in.from-right, html.js .reveal.in.zoom { transform: none; }
 .reviews-grid:empty { display: none; }
+.reviews-empty { text-align: center; color: var(--text2); margin-bottom: 28px; }
+.reviews-grid:not(:empty) + .reviews-empty { display: none; }
+.reviews-grid:empty { display: none; }
+.review-form { max-width: 720px; margin: 36px auto 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 26px; position: relative; }
+.review-form h3 { font-family: var(--font-display); letter-spacing: 1.5px; font-size: 1.5rem; margin-bottom: 16px; color: var(--white); }
+.rv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.review-form input:not([name=website]), .review-form select, .review-form textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 13px 15px; color: var(--text); font: 1rem var(--font-body); outline: none; }
+.review-form textarea { margin-bottom: 14px; resize: vertical; }
+.review-form input:focus, .review-form select:focus, .review-form textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.review-form .btn-primary { width: 100%; }
+.review-form .form-status:empty { display: none; }
+@media (max-width: 600px) { .rv-grid { grid-template-columns: 1fr; } }

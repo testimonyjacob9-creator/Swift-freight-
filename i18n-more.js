@@ -207,3 +207,13 @@ Object.entries({
   ar: ["تحدث مع موظف بشأن طلبك", "تواصل عبر واتساب"],
   zh: ["就您的订单流程联系真人客服", "通过 WhatsApp 聊天"]
 }).forEach(([l, [a, b]]) => Object.assign(window.__i18nExtra[l], { talk_human: a, talk_human_short: b }));
+
+Object.entries({
+  en: ["Shipped with us? Tell others how it went.", "Be the first to share your experience.", "Leave a review", "Submit review"],
+  fr: ["Vous avez expédié avec nous ? Racontez votre expérience.", "Soyez le premier à partager votre expérience.", "Laisser un avis", "Envoyer l'avis"],
+  es: ["¿Enviaste con nosotros? Cuéntanos cómo fue.", "Sé el primero en compartir tu experiencia.", "Dejar una reseña", "Enviar reseña"],
+  pt: ["Enviou conosco? Conte como foi.", "Seja o primeiro a compartilhar sua experiência.", "Deixe uma avaliação", "Enviar avaliação"],
+  de: ["Mit uns versendet? Erzählen Sie, wie es lief.", "Teilen Sie als Erster Ihre Erfahrung.", "Bewertung abgeben", "Bewertung senden"],
+  ar: ["هل شحنت معنا؟ شاركنا تجربتك.", "كن أول من يشارك تجربته.", "اترك تقييماً", "إرسال التقييم"],
+  zh: ["使用过我们的服务？分享您的体验。", "成为第一个分享体验的人。", "发表评价", "提交评价"]
+}).forEach(([l, [a, b, c, d]]) => Object.assign(window.__i18nExtra[l], { reviews_sub2: a, reviews_empty: b, rv_form_title: c, rv_submit: d }));

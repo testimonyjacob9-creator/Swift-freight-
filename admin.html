@@ -51,7 +51,7 @@
         <a class="sidebar-link"        data-tab="contacts"  onclick="switchTab('contacts')">📩 &nbsp;Contact Forms <span class="nav-badge hidden" id="badgeContacts">0</span></a>
         <a class="sidebar-link"        data-tab="shipments" onclick="switchTab('shipments')">📦 &nbsp;Shipments</a>
         <a class="sidebar-link"        data-tab="add"       onclick="switchTab('add')">➕ &nbsp;Add Shipment</a>
-        <a class="sidebar-link"        data-tab="reviews"   onclick="switchTab('reviews')">⭐ &nbsp;Reviews</a>
+        <a class="sidebar-link"        data-tab="reviews"   onclick="switchTab('reviews')">⭐ &nbsp;Reviews <span class="nav-badge hidden" id="badgeReviews">0</span></a>
         <a class="sidebar-link"        data-tab="settings"  onclick="switchTab('settings')">⚙️ &nbsp;Settings</a>
       </nav>
       <button class="sidebar-theme" onclick="sfToggleTheme()">🌗 &nbsp;Theme</button>
@@ -104,18 +104,19 @@
       <!-- REVIEWS TAB -->
       <div id="tab-reviews" class="tab-content hidden">
         <div class="dash-header"><h1>Customer Reviews</h1></div>
-        <p class="hint">Only add genuine reviews from real customers. They appear on the home page (the section stays hidden until you add one).</p>
+        <p class="hint">Visitors can submit reviews from your home page. They stay <b>pending</b> until you approve them. Check the tracking ref, add a photo/avatar, then approve. You can also add a review yourself below.</p>
         <div class="panel" style="max-width:720px;margin-bottom:24px">
           <div class="form-row">
             <div class="form-group"><label>Customer name</label><input id="rvName" placeholder="Full name"/></div>
-            <div class="form-group"><label>Role / company</label><input id="rvRole" placeholder="Importer, Lagos"/></div>
+            <div class="form-group"><label>Role / company</label><input id="rvRole" placeholder="Importer, Brazil"/></div>
           </div>
           <div class="form-group"><label>Review</label><textarea id="rvText" rows="3" placeholder="What the customer said…"></textarea></div>
           <div class="form-row">
             <div class="form-group"><label>Stars</label><select id="rvStars"><option>5</option><option>4</option><option>3</option></select></div>
-            <div class="form-group" style="align-self:end"><button class="btn-primary" onclick="addReview()">Add review</button></div>
+            <div class="form-group"><label>Photo / avatar (optional)</label><input type="file" id="rvAvatar" accept="image/*"/></div>
           </div>
         </div>
+        <button class="btn-primary" onclick="addReview()" style="margin:-8px 0 24px">Add review</button>
         <div id="reviewList"></div>
       </div>
 

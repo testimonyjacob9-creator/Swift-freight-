@@ -31,7 +31,7 @@
         <li><a href="#services" data-i18n="nav_services">Services</a></li>
         <li><a href="#about" data-i18n="nav_about">About</a></li>
         <li><a href="#tracking" data-i18n="nav_tracking">Track</a></li>
-        <li class="nav-reviews hidden"><a href="#reviews" data-i18n="nav_reviews">Reviews</a></li>
+        <li class="nav-reviews"><a href="#reviews" data-i18n="nav_reviews">Reviews</a></li>
         <li><a href="contact.html" class="btn-nav" data-i18n="nav_contact">Contact Us</a></li>
       </ul>
       <div class="nav-right">
@@ -192,14 +192,29 @@
     </div>
   </section>
 
-  <!-- REVIEWS (filled from the admin portal; hidden until real reviews are added) -->
-  <section class="reviews hidden" id="reviews" aria-labelledby="reviewsTitle">
+  <!-- REVIEWS: approved customer reviews + submission form -->
+  <section class="reviews" id="reviews" aria-labelledby="reviewsTitle">
     <div class="container">
-      <div class="section-header">
+      <div class="section-header reveal">
         <p class="section-tag" data-i18n="reviews_tag">CLIENT FEEDBACK</p>
         <h2 id="reviewsTitle" data-i18n="reviews_title">Trusted by shippers who can't afford delays</h2>
+        <p class="section-sub" data-i18n="reviews_sub2">Shipped with us? Tell others how it went.</p>
       </div>
       <div class="reviews-grid" id="reviewsGrid"></div>
+      <p class="reviews-empty" id="reviewsEmpty" data-i18n="reviews_empty">Be the first to share your experience.</p>
+      <form class="review-form" onsubmit="return submitReview(event)">
+        <h3 data-i18n="rv_form_title">Leave a review</h3>
+        <div class="rv-grid">
+          <input name="rname" maxlength="60" placeholder="Your name" required autocomplete="name"/>
+          <input name="rrole" maxlength="80" placeholder="Company / country (optional)"/>
+          <input name="rtrack" maxlength="20" placeholder="Tracking number (helps us verify)" autocapitalize="characters" autocomplete="off"/>
+          <select name="rstars" aria-label="Rating"><option value="5">★★★★★ Excellent</option><option value="4">★★★★☆ Good</option><option value="3">★★★☆☆ Okay</option></select>
+        </div>
+        <textarea name="rtext" rows="4" maxlength="600" placeholder="Your experience with Swift Air Cargo…" required></textarea>
+        <input name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true"/>
+        <button class="btn-primary" type="submit" data-i18n="rv_submit">Submit review</button>
+        <div id="rvFormStatus" class="form-status" style="margin-top:12px"></div>
+      </form>
     </div>
   </section>
 

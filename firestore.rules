@@ -12,8 +12,17 @@ service cloud.firestore {
     // Website settings (contact details, offices, WhatsApp) – public read, admin write
     match /settings/{id} { allow read: if true; allow write: if isAdmin(); }
 
-    // Customer reviews added by admins – public read
-    match /reviews/{id} { allow read: if true; allow write: if isAdmin(); }
+    // Reviews: public can read approved ones and submit a pending one; admins moderate
+    match /reviews/{id} {
+      allow read: if isAdmin() || resource.data.status == 'approved';
+      allow create: if isAdmin() || (
+        request.resource.data.status == 'pending' &&
+        request.resource.data.visible == false &&
+        request.resource.data.name is string && request.resource.data.name.size() <= 60 &&
+        request.resource.data.text is string && request.resource.data.text.size() <= 600 &&
+        !('avatar' in request.resource.data));
+      allow update, delete: if isAdmin();
+    }
 
     // Live chat. The chat ID is a random secret kept in the visitor's browser.
     match /chats/{chatId} {

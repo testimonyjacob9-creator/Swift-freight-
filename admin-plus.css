@@ -140,3 +140,10 @@
   .sidebar-logo { font-size: 1.05rem !important; letter-spacing: 1px !important; padding: 12px 8px 12px 14px !important; flex: 1 1 auto; min-width: 0; }
   .sidebar-theme, .sidebar-logout { flex: none; white-space: nowrap; }
 }
+.rv-h { font-family: var(--font-display); letter-spacing: 1.2px; color: var(--white); margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
+.rv-row { display: flex; gap: 14px; align-items: flex-start; }
+.rv-av { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex: none; background: var(--accent-dim); border: 2px solid var(--accent); }
+.rv-av.ini { display: grid; place-items: center; color: var(--accent); font-weight: 700; }
+.rv-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.filebtn { cursor: pointer; display: inline-flex; align-items: center; }
+.rv-card small.ok { color: #22c55e; } .rv-card small.warn { color: #f59e0b; }

@@ -857,6 +857,7 @@ function updateBadges() {
 function startRealtime() {
   if (realtimeStarted) return; realtimeStarted = true;
   loadSettings();
+  loadReviewsAdmin();
   let firstC = true;
   onSnapshot(query(collection(db, "contacts"), orderBy("timestamp", "desc")), snap => {
     if (!firstC && snap.docChanges().some(c => c.type === "added")) beep();
@@ -1038,27 +1039,57 @@ window.saveSettings = async function () {
 };
 
 // ═════════════════════════════════════════════════════
-// REVIEWS (real customer reviews only)
+// REVIEWS (visitor submissions are moderated; admin sets avatar)
 // ═════════════════════════════════════════════════════
+const avatarFromFile = async file => blobToDataUrl(await shrink(file, 160, 0.82));
+const reviewAvatarHtml = r => r.avatar
+  ? `<img class="rv-av" src="${esc(r.avatar)}" alt=""/>`
+  : `<span class="rv-av ini">${esc((r.name || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase())}</span>`;
+
 async function loadReviewsAdmin() {
   const el = document.getElementById("reviewList");
   try {
-    const snap = await getDocs(query(collection(db, "reviews"), orderBy("createdAt", "desc")));
-    el.innerHTML = snap.docs.map(d => { const r = d.data(); return `
-      <div class="submission-card"><div class="sub-header"><span class="sub-name">${esc(r.name)} <small style="color:var(--text3)">${esc(r.role || "")}</small></span><span>${"★".repeat(r.stars || 5)}</span></div>
-      <div class="sub-preview">${esc(r.text)}</div>
-      <div style="margin-top:10px;display:flex;gap:8px"><button class="btn-outline" onclick="toggleReview('${d.id}',${r.visible === false})">${r.visible === false ? "Show" : "Hide"}</button><button class="btn-outline danger" onclick="deleteReview('${d.id}')">Delete</button></div></div>`; }).join("")
-      || '<div class="empty-msg">No reviews yet. The Reviews section stays hidden on your website until you add one.</div>';
-  } catch (e) { el.innerHTML = `<div class="error-msg">❌ ${esc(e.message)}</div>`; }
+    const snap = await getDocs(collection(db, "reviews"));
+    const all = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    const pending = all.filter(r => r.status === "pending");
+    const live = all.filter(r => r.status !== "pending");
+    const card = r => {
+      const known = r.trackingRef && shipments.some(s => s.trackingId === String(r.trackingRef).toUpperCase());
+      return `<div class="submission-card rv-card ${r.status === "pending" ? "unread" : ""}">
+        <div class="rv-row">${reviewAvatarHtml(r)}
+          <div style="flex:1;min-width:0"><div class="sub-header"><span class="sub-name">${esc(r.name)} <small style="color:var(--text3)">${esc(r.role || "")}</small></span><span style="color:var(--accent)">${"★".repeat(r.stars || 5)}</span></div>
+          <div class="sub-preview">${esc(r.text)}</div>
+          ${r.trackingRef ? `<small class="${known ? "ok" : "warn"}">Tracking ref: ${esc(r.trackingRef)} ${known ? "✔ matches a shipment" : "✖ no matching shipment"}</small>` : '<small class="warn">No tracking ref given</small>'}</div></div>
+        <div class="rv-actions">
+          ${r.status === "pending" ? `<button class="btn-primary" onclick="approveReview('${r.id}')">✔ Approve</button>` : `<button class="btn-outline" onclick="toggleReview('${r.id}',${r.visible === false})">${r.visible === false ? "Show" : "Hide"}</button>`}
+          <label class="btn-outline filebtn">🖼 ${r.avatar ? "Change" : "Add"} photo<input type="file" accept="image/*" hidden onchange="setReviewAvatar('${r.id}',this)"/></label>
+          ${r.avatar ? `<button class="btn-outline" onclick="clearReviewAvatar('${r.id}')">Remove photo</button>` : ""}
+          <button class="btn-outline danger" onclick="deleteReview('${r.id}')">${r.status === "pending" ? "Reject" : "Delete"}</button>
+        </div></div>`;
+    };
+    el.innerHTML =
+      `<h3 class="rv-h">Pending approval <span class="nav-badge ${pending.length ? "" : "hidden"}">${pending.length}</span></h3>` +
+      (pending.map(card).join("") || '<div class="empty-msg" style="padding:18px">Nothing waiting.</div>') +
+      `<h3 class="rv-h">On your website</h3>` +
+      (live.map(card).join("") || '<div class="empty-msg" style="padding:18px">No published reviews yet. The Reviews list on your site stays empty until you approve or add one.</div>');
+    const nb = document.getElementById("badgeReviews"); if (nb) { nb.textContent = pending.length; nb.classList.toggle("hidden", !pending.length); }
+  } catch (e) { el.innerHTML = `<div class="error-msg">❌ ${esc(e.message)} (deploy the updated firestore.rules)</div>`; }
 }
 window.addReview = async function () {
   const name = document.getElementById("rvName").value.trim(), text = document.getElementById("rvText").value.trim();
   if (!name || !text) return alert("Name and review text are required.");
-  await addDoc(collection(db, "reviews"), { name, role: document.getElementById("rvRole").value.trim(), text, stars: +document.getElementById("rvStars").value, visible: true, createdAt: serverTimestamp() });
-  ["rvName", "rvRole", "rvText"].forEach(i => document.getElementById(i).value = ""); loadReviewsAdmin();
+  const f = document.getElementById("rvAvatar").files[0];
+  const data = { name, role: document.getElementById("rvRole").value.trim(), text, stars: +document.getElementById("rvStars").value, visible: true, status: "approved", createdAt: serverTimestamp() };
+  if (f) data.avatar = await avatarFromFile(f);
+  await addDoc(collection(db, "reviews"), data);
+  ["rvName", "rvRole", "rvText", "rvAvatar"].forEach(i => document.getElementById(i).value = ""); loadReviewsAdmin();
 };
+window.approveReview = async id => { await updateDoc(doc(db, "reviews", id), { status: "approved", visible: true }); loadReviewsAdmin(); };
 window.toggleReview = async (id, show) => { await updateDoc(doc(db, "reviews", id), { visible: show }); loadReviewsAdmin(); };
 window.deleteReview = async id => { if (confirm("Delete this review?")) { await deleteDoc(doc(db, "reviews", id)); loadReviewsAdmin(); } };
+window.setReviewAvatar = async (id, input) => { const f = input.files[0]; if (!f) return; await updateDoc(doc(db, "reviews", id), { avatar: await avatarFromFile(f) }); loadReviewsAdmin(); };
+window.clearReviewAvatar = async id => { await updateDoc(doc(db, "reviews", id), { avatar: null }); loadReviewsAdmin(); };
 
 // ═════════════════════════════════════════════════════
 // ORDER RECEIPT  (on-screen preview, PDF, image, print, WhatsApp)
