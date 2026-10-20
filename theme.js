@@ -4,13 +4,12 @@
   root.classList.add("js");
   var saved = null;
   try { saved = localStorage.getItem("sf_theme"); } catch (e) {}
-  var prefersDark = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches;
   function apply(t) {
     root.setAttribute("data-theme", t);
     var m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.setAttribute("content", t === "light" ? "#f6f7fb" : "#080809");
+    if (m) m.setAttribute("content", t === "light" ? "#ffffff" : "#080809");
   }
-  apply(saved || (prefersDark ? "dark" : "light"));
+  apply(saved === "dark" ? "dark" : "light"); // white by default; dark only if the user chose it
   window.sfToggleTheme = function () { var n = root.getAttribute("data-theme") === "light" ? "dark" : "light"; apply(n); try { localStorage.setItem("sf_theme", n); } catch (e) {} };
 
   document.addEventListener("DOMContentLoaded", function () {
