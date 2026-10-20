@@ -24,6 +24,9 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Saved receipts – admin only
+    match /receipts/{id} { allow read, write: if isAdmin(); }
+
     // Live chat. The chat ID is a random secret kept in the visitor's browser.
     match /chats/{chatId} {
       allow create: if true;

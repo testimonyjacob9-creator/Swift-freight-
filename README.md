@@ -28,3 +28,7 @@ If Storage isn't enabled, uploads fall back to a compressed inline copy so the a
 - Admin → **Live Chat**: real-time inbox. Visitors talk to an automated assistant until they ask for a human; then their messages arrive here and your replies appear in their chat. They can also continue on WhatsApp with a prefilled message.
 - Admin → **Shipments**: 12-character tracking IDs (auto-generated), sender/consignee details, payment status, status history, CSV export, order receipt as **PDF**, image, print or WhatsApp.
 - Admin → **Reviews**: add genuine customer reviews. The Reviews section on the home page stays hidden until you add one.
+
+## Receipts tab (admin → 🧾 Receipts)
+Build a receipt from scratch or start from a shipment: edit sender/consignee, add price line items, discount, payment method and status, payment instructions and a note, with a live preview. Toggle **Show prices** and the stamp, then **Save**, **PDF**, **Image**, **Print**, or **Share** (attaches the real file via the phone share sheet). Saved receipts are listed under the preview.
+**Deploy the updated rules** so receipts can be saved: `firebase deploy --only firestore:rules`

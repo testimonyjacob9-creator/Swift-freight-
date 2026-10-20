@@ -92,6 +92,8 @@
 .rc-bottom { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: start; margin-bottom: 10px; }
 .rc-pay h4 { font-size: 12px; margin-bottom: 4px; } .rc-pay pre { font-family: inherit; white-space: pre-wrap; font-size: 12px; margin: 0; color: #334155; }
 .rc-qr { text-align: center; } .rc-qr small { display: block; font-size: 10px; color: #64748b; margin-top: 3px; }
+.rc-methods { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 8px; } .rc-methods span { border: 1px solid #cbd5e1; border-radius: 50px; padding: 2px 11px; font-size: 11px; font-weight: 700; color: #334155; background: #f8fafc; }
+.rc-verify { display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1px solid #e5e9f0; border-radius: 10px; padding: 10px 14px; margin-top: 8px; font-size: 11.5px; color: #475569; } .rc-verify p { margin: 0; } .rc-stamp { flex: none; }
 .rc-terms { font-size: 10.5px; color: #64748b; border-top: 1px dashed #c3cad6; padding-top: 8px; margin-top: 6px; }
 .rc-sign { display: flex; gap: 40px; margin: 26px 0 8px; font-size: 10.5px; color: #64748b; } .rc-sign div { flex: 1; } .rc-sign span { display: block; border-bottom: 1px solid #94a3b8; height: 22px; margin-bottom: 4px; }
 .rc-thanks { text-align: center; font-weight: 600; color: #475569; margin-top: 8px; }
@@ -147,3 +149,20 @@
 .rv-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .filebtn { cursor: pointer; display: inline-flex; align-items: center; }
 .rv-card small.ok { color: #22c55e; } .rv-card small.warn { color: #f59e0b; }
+
+/* ── Receipts tab ── */
+.rp-wrap { display: grid; grid-template-columns: minmax(320px, 460px) 1fr; gap: 22px; align-items: start; }
+.rp-side { min-width: 0; position: sticky; top: 12px; }
+.rp-h { font-size: .72rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1.5px; margin: 20px 0 10px; }
+.rp-check { display: flex; align-items: center; gap: 8px; font-size: .85rem; margin: 6px 0 12px; cursor: pointer; } .rp-check input { width: auto; }
+.rp-item { display: grid; grid-template-columns: 56px 1fr 96px 30px; gap: 6px; margin-bottom: 6px; } .rp-item input { min-width: 0; }
+.rp-item button { border: 0; background: none; color: #dc2626; font-size: 1.1rem; cursor: pointer; }
+.rp-total { font-weight: 700; text-align: right; margin-bottom: 6px; }
+.rp-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.rp-hist { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--border, #e5e9f0); border-radius: 8px; margin-bottom: 6px; font-size: .85rem; }
+.rp-hist small { color: var(--text3); display: block; }
+.rp-hist button { margin-left: 6px; }
+.receipt .r { text-align: right; }
+.rc-sum { margin-left: auto; min-width: 240px; font-size: 12.5px; border-collapse: collapse; } .rc-sum td { padding: 4px 6px; } .rc-sum tr.tot td { border-top: 2px solid #14202e; font-weight: 800; font-size: 15px; padding-top: 8px; }
+.rc-note { border-left: 4px solid #d97706; background: #fffbeb; padding: 8px 12px; border-radius: 4px; margin: 10px 0; font-size: 12px; white-space: pre-wrap; } .rc-note h4 { font-size: 11px; letter-spacing: 1px; margin-bottom: 2px; color: #92400e; }
+@media (max-width: 1100px) { .rp-wrap { grid-template-columns: 1fr; } .rp-side { position: static; } }

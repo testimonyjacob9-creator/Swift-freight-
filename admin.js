@@ -144,6 +144,7 @@ window.switchTab = function (tab) {
   if (tab === "chats") renderChatList();
   if (tab === "settings") fillSettingsForm();
   if (tab === "reviews") loadReviewsAdmin();
+  if (tab === "receipts") initReceiptsTab();
   if (tab === "add") {
     if (!addMapInited) {
       initAddMap();
@@ -826,7 +827,7 @@ let SETTINGS = {
   hours: "24/7", offices: [{ name: "Head Office", address: "New York City, USA" }],
   waMessage: "Hello Swift Air Cargo 👋 I'd like to talk to a human about my order processes.",
   chatEnabled: true, chatGreeting: "Hi 👋 I'm the Swift Air Cargo assistant. How can I help you today?",
-  website: "", payInfo: "", terms: "Goods are carried subject to our terms of carriage. Keep this receipt for claims."
+  website: "", payInfo: "", payMethods: "Bank transfer, Card, PayPal", terms: "Goods are carried subject to our terms of carriage. Keep this receipt for claims."
 };
 let chats = [], activeChatId = null, unsubMsgs = null, realtimeStarted = false;
 const digits = v => String(v || "").replace(/[^\d]/g, "");
@@ -1015,7 +1016,7 @@ async function fillSettingsForm() {
   await loadSettings();
   const S = SETTINGS, v = (id, val) => { document.getElementById(id).value = val ?? ""; };
   v("stEmail", S.email); v("stPhone", S.phone); v("stWa", S.whatsapp); v("stHours", S.hours);
-  v("stWaMsg", S.waMessage); v("stGreeting", S.chatGreeting); v("stSite", S.website); v("stPayInfo", S.payInfo); v("stTerms", S.terms);
+  v("stWaMsg", S.waMessage); v("stGreeting", S.chatGreeting); v("stSite", S.website); v("stPayInfo", S.payInfo); v("stPayMethods", S.payMethods); v("stTerms", S.terms);
   document.getElementById("stChatOn").checked = S.chatEnabled !== false;
   document.getElementById("stOffices").innerHTML = (S.offices || []).map(officeRow).join("");
 }
@@ -1028,7 +1029,7 @@ window.saveSettings = async function () {
   const data = {
     email: g("stEmail"), phone: g("stPhone"), whatsapp: g("stWa"), hours: g("stHours"), offices,
     waMessage: g("stWaMsg"), chatGreeting: g("stGreeting"), chatEnabled: document.getElementById("stChatOn").checked,
-    website: g("stSite"), payInfo: g("stPayInfo"), terms: g("stTerms"), updatedAt: serverTimestamp()
+    website: g("stSite"), payInfo: g("stPayInfo"), payMethods: g("stPayMethods"), terms: g("stTerms"), updatedAt: serverTimestamp()
   };
   try {
     await setDoc(doc(db, "settings", "site"), data, { merge: true });
@@ -1097,6 +1098,21 @@ window.clearReviewAvatar = async id => { await updateDoc(doc(db, "reviews", id),
 const TRACK_URL = id => new URL(`track.html?id=${encodeURIComponent(id || "")}`, location.href).href;
 let receiptShipment = null;
 
+function stampSvg(s) {
+  const paid = /paid/i.test(s.payStatus || "") && !/un|part/i.test(s.payStatus || "");
+  const d = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
+  const c = paid ? "#16a34a" : "#1d4ed8", mid = paid ? "PAID" : "ISSUED";
+  return `<svg viewBox="0 0 120 120" width="104" height="104" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(-12deg)">
+    <defs><path id="rcArcT" d="M16,60 a44,44 0 1,1 88,0"/><path id="rcArcB" d="M10,60 a50,50 0 0,0 100,0"/></defs>
+    <circle cx="60" cy="60" r="56" fill="none" stroke="${c}" stroke-width="3"/>
+    <circle cx="60" cy="60" r="50" fill="none" stroke="${c}" stroke-width="1"/>
+    <circle cx="60" cy="60" r="33" fill="none" stroke="${c}" stroke-width="1.5"/>
+    <text font-family="Arial,sans-serif" font-size="11" font-weight="800" fill="${c}" letter-spacing="1.5"><textPath href="#rcArcT" startOffset="50%" text-anchor="middle">SWIFT AIR CARGO</textPath></text>
+    <text font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="${c}" letter-spacing="1"><textPath href="#rcArcB" startOffset="50%" text-anchor="middle">OFFICIAL RECEIPT</textPath></text>
+    <text x="60" y="58" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="900" fill="${c}">${mid}</text>
+    <text x="60" y="73" text-anchor="middle" font-family="Arial,sans-serif" font-size="7.5" font-weight="700" fill="${c}">${d}</text>
+  </svg>`;
+}
 function receiptHtml(s) {
   const S = SETTINGS, o = (S.offices && S.offices[0]) || {};
   const f = v => esc(v || "—");
@@ -1104,6 +1120,14 @@ function receiptHtml(s) {
   const eta = s.eta ? new Date(s.eta.toDate ? s.eta.toDate() : s.eta).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "—";
   const col = STATUS_COLORS[s.status] || "#64748b";
   const photo = (s.photos || [])[0];
+  const items = Array.isArray(s.items) ? s.items.filter(i => i.desc || +i.unit) : [];
+  const itemsMode = items.length > 0, hp = !!s.hidePrices, cur = s.currency || "";
+  const money = n => esc(cur) + Number(n || 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const sub = items.reduce((a, i) => a + (+i.qty || 0) * (+i.unit || 0), 0), disc = +s.discount || 0, total = Math.max(0, sub - disc);
+  const itemsTable = `<table class="rc-table"><thead><tr><th>Qty</th><th>Description</th>${hp ? "" : '<th class="r">Unit price</th><th class="r">Amount</th>'}</tr></thead><tbody>
+    ${items.map(i => `<tr><td>${esc(i.qty || 1)}</td><td>${f(i.desc)}</td>${hp ? "" : `<td class="r">${money(i.unit)}</td><td class="r">${money((+i.qty || 0) * (+i.unit || 0))}</td>`}</tr>`).join("")}</tbody></table>
+    ${hp ? "" : `<table class="rc-sum"><tr><td>Subtotal</td><td class="r">${money(sub)}</td></tr>${disc ? `<tr><td>Discount</td><td class="r">− ${money(disc)}</td></tr>` : ""}<tr class="tot"><td>TOTAL</td><td class="r">${money(total)}</td></tr></table>`}`;
+  const methods = String(S.payMethods || "").split(",").map(x => x.trim()).filter(Boolean);
   return `
   <div class="rc-top">
     <div class="rc-brand"><div class="rc-logo">⬡ Swift <b>Air Cargo</b></div><small>Global logistics · Air · Sea · Road</small></div>
@@ -1124,20 +1148,29 @@ function receiptHtml(s) {
   <div class="rc-mid">
     <div class="rc-barcode"><svg id="rcBar"></svg><span>${esc(s.trackingId)}</span></div>
     <div class="rc-info">
+      ${s.receiptNo ? `<p><u>Receipt No:</u> ${esc(s.receiptNo)}</p>` : ""}
       <p><u>Order ID:</u> ${f(s.orderId)}</p>
       <p><u>Est. Delivery Date:</u> ${esc(eta)}</p>
       <p><u>Payment Mode:</u> <b class="rc-pill pay">${f(s.payMode)}</b> · <b class="rc-pill ${/paid/i.test(s.payStatus || "") && !/un|part/i.test(s.payStatus) ? "ok" : "warn"}">${f(s.payStatus || "Pending")}</b></p>
       <p><u>Mode of Transport:</u> ${f(s.transport || s.service)}</p>
-      <p><u>Issued:</u> ${esc(new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }))}</p>
+      ${itemsMode ? `<p><u>Shipment:</u> ${f(s.shipType || s.service)}${s.weight ? " · " + esc(s.weight) : ""}</p><p><u>Status:</u> <b style="color:${col}">${f(s.status)}</b></p>` : ""}
+      <p><u>Issued:</u> ${esc(s.issued || new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }))}</p>
     </div>
   </div>
-  <table class="rc-table"><thead><tr><th>Qty</th><th>Type of Shipment</th><th>Product</th><th>Weight</th><th>Status</th><th>Total Amount</th><th>Custom Clearance Charges</th></tr></thead>
+  ${itemsMode ? itemsTable : `<table class="rc-table"><thead><tr><th>Qty</th><th>Type of Shipment</th><th>Product</th><th>Weight</th><th>Status</th><th>Total Amount</th><th>Custom Clearance Charges</th></tr></thead>
     <tbody><tr><td>${f(s.qty || "1")}</td><td>${f(s.shipType || s.service)}</td><td>${f(s.product)}</td><td>${f(s.weight)}</td>
-    <td><b class="rc-pill" style="color:${col}">● ${f(s.status)}</b></td><td><b>${f(s.charge)}</b></td><td>${f(s.customsCharge)}</td></tr></tbody></table>
+    <td><b class="rc-pill" style="color:${col}">● ${f(s.status)}</b></td><td><b>${f(s.charge)}</b></td><td>${f(s.customsCharge)}</td></tr></tbody></table>`}
   ${photo ? `<img class="rc-photo" crossorigin="anonymous" src="${esc(photo)}" alt="Shipment photo" onerror="this.remove()"/>` : ""}
   <div class="rc-bottom">
-    <div class="rc-pay"><h4>Payment Methods / Instructions</h4><pre>${esc(S.payInfo || "Contact us for payment instructions.")}</pre></div>
+    <div class="rc-pay"><h4>Payment Methods / Instructions</h4>
+      ${methods.length ? `<div class="rc-methods">${methods.map(m => `<span>${esc(m)}</span>`).join("")}</div>` : ""}
+      <pre>${esc(s.payInfo || S.payInfo || "Contact us for payment instructions.")}</pre></div>
     <div class="rc-qr"><div id="rcQr"></div><small>Scan to track live</small></div>
+  </div>
+  ${s.note ? `<div class="rc-note"><h4>Note</h4><div>${esc(s.note)}</div></div>` : ""}
+  <div class="rc-verify">
+    ${s.noStamp ? "" : `<div class="rc-stamp">${stampSvg(s)}</div>`}
+    <p><b>Verify this receipt.</b> Open <u>${esc(site.replace(/^https?:\/\//, "").replace(/\/$/, ""))}/track.html</u> and enter tracking number <b>${esc(s.trackingId)}</b>, or scan the QR code. Only pay using the instructions shown on this receipt.</p>
   </div>
   <div class="rc-terms">${esc(S.terms || "")}</div>
   <div class="rc-sign"><div><span></span>Authorised signature</div><div><span></span>Receiver signature</div></div>
@@ -1173,24 +1206,51 @@ async function receiptCanvas() {
 const rName = ext => `SwiftAirCargo-Receipt-${(receiptShipment?.trackingId || "order").replace(/[^\w-]/g, "_")}.${ext}`;
 function rErr(e) { const m = document.getElementById("receiptMsg"); m.className = "form-status error"; m.textContent = "❌ " + e.message; m.classList.remove("hidden"); }
 
-window.downloadReceiptPdf = async function () {
+async function receiptPdfBlob() {
+  if (!window.jspdf || !window.html2canvas) throw new Error("PDF library still loading — try again in a moment.");
+  const canvas = await receiptCanvas();
+  const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+  const pw = 210, ph = 297, m = 8;
+  let w = pw - m * 2, h = canvas.height * w / canvas.width;
+  if (h > ph - m * 2) { h = ph - m * 2; w = canvas.width * h / canvas.height; }
+  pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", (pw - w) / 2, m, w, h);
+  return pdf.output("blob");
+}
+async function receiptPngBlob() {
+  if (!window.html2canvas) throw new Error("Image library still loading — try again in a moment.");
+  const canvas = await receiptCanvas();
+  return new Promise(res => canvas.toBlob(res, "image/png"));
+}
+function saveBlob(blob, name) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+// Share the actual receipt FILE (PDF or image) via the device share sheet → WhatsApp, Telegram, email, etc.
+window.shareReceiptFile = async function (kind = "pdf") {
+  const s = receiptShipment; if (!s) return;
   try {
-    if (!window.jspdf || !window.html2canvas) throw new Error("PDF library still loading — try again in a moment.");
-    const canvas = await receiptCanvas();
-    const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
-    const pw = 210, ph = 297, m = 8;
-    let w = pw - m * 2, h = canvas.height * w / canvas.width;
-    if (h > ph - m * 2) { h = ph - m * 2; w = canvas.width * h / canvas.height; }
-    pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", (pw - w) / 2, m, w, h);
-    pdf.save(rName("pdf"));
-  } catch (e) { rErr(e); }
+    const isPdf = kind === "pdf";
+    const blob = isPdf ? await receiptPdfBlob() : await receiptPngBlob();
+    const file = new File([blob], rName(isPdf ? "pdf" : "png"), { type: isPdf ? "application/pdf" : "image/png" });
+    const text = `Swift Air Cargo 📦\nTracking number: ${s.trackingId}\nTrack live: ${TRACK_URL(s.trackingId)}`;
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Shipment receipt", text });
+    } else {
+      // Desktop / unsupported browsers: download the file, then open WhatsApp so it can be attached
+      saveBlob(blob, file.name);
+      const m = document.getElementById("receiptMsg");
+      m.className = "form-status success"; m.textContent = "✅ Receipt downloaded — attach it in WhatsApp (opening now).";
+      m.classList.remove("hidden");
+      setTimeout(() => window.open(`https://wa.me/${digits(s.receiverPhone || s.senderPhone)}?text=${encodeURIComponent(text)}`, "_blank", "noopener"), 600);
+    }
+  } catch (e) { if (e.name !== "AbortError") rErr(e); }
+};
+
+window.downloadReceiptPdf = async function () {
+  try { saveBlob(await receiptPdfBlob(), rName("pdf")); } catch (e) { rErr(e); }
 };
 window.downloadReceipt = async function () {
-  try {
-    if (!window.html2canvas) throw new Error("Image library still loading — try again in a moment.");
-    const canvas = await receiptCanvas();
-    canvas.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = rName("png"); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }, "image/png");
-  } catch (e) { rErr(e); }
+  try { saveBlob(await receiptPngBlob(), rName("png")); } catch (e) { rErr(e); }
 };
 window.printReceipt = function () {
   document.body.classList.add("printing-receipt");
@@ -1203,4 +1263,152 @@ window.shareReceiptWa = function () {
   const to = digits(s.receiverPhone || s.senderPhone);
   const txt = `Swift Air Cargo 📦\nTracking number: ${s.trackingId}\nStatus: ${s.status || "—"}\nTrack live: ${TRACK_URL(s.trackingId)}`;
   window.open(`https://wa.me/${to}?text=${encodeURIComponent(txt)}`, "_blank", "noopener");
+};
+
+
+// ═════════════════════════════════════════════════════
+// RECEIPTS TAB  (build a receipt, add note / payment method / prices, preview live, then save/print/share)
+// ═════════════════════════════════════════════════════
+let rpItems = [], rpInited = false, rpTimer = null, rpEditId = null;
+const $r = id => document.getElementById(id);
+const rpNewNo = () => { const d = new Date(); return `RC-${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-${Math.floor(1000 + Math.random() * 9000)}`; };
+const isoDay = v => { if (!v) return ""; const d = v.toDate ? v.toDate() : new Date(v); return isNaN(d) ? "" : d.toISOString().slice(0, 10); };
+const numOf = v => { const n = parseFloat(String(v ?? "").replace(/,/g, "").replace(/[^\d.]/g, "")); return isNaN(n) ? 0 : n; };
+const curOf = v => (String(v || "").match(/^[^\d\s.,-]+/) || [""])[0];
+
+async function initReceiptsTab() {
+  await loadSettings();
+  const pick = $r("rpPick"), cur = pick.value;
+  pick.innerHTML = '<option value="">— Blank receipt —</option>' + shipments.map(s => `<option value="${esc(s.id)}">${esc(s.trackingId)} — ${esc(s.receiverName || s.client || "")}</option>`).join("");
+  pick.value = cur;
+  const methods = String(SETTINGS.payMethods || "Bank transfer, Card, PayPal").split(",").map(x => x.trim()).filter(Boolean);
+  const pm = $r("rpPayMode"), keep = pm.value;
+  pm.innerHTML = [...methods, "Cash", "Other"].filter((v, i, a) => a.indexOf(v) === i).map(m => `<option>${esc(m)}</option>`).join("");
+  if (keep) pm.value = keep;
+  if (!rpInited) {
+    rpInited = true;
+    $r("tab-receipts").addEventListener("input", rpQueue);
+    $r("tab-receipts").addEventListener("change", rpQueue);
+    rpNew();
+  }
+  rpLoadHistory();
+}
+function rpQueue() { clearTimeout(rpTimer); rpTimer = setTimeout(rpPreview, 150); }
+
+window.rpNew = function () {
+  rpEditId = null; $r("rpPick").value = "";
+  rpSet({ receiptNo: rpNewNo(), issued: new Date().toISOString().slice(0, 10), payInfo: SETTINGS.payInfo || "", items: [{ desc: "", qty: 1, unit: "" }], payStatus: "Pending", payMode: String(SETTINGS.payMethods || "").split(",")[0]?.trim() || "Bank transfer" });
+};
+window.rpFill = function (id) {
+  const s = shipments.find(x => x.id === id); if (!s) return rpNew();
+  const items = [];
+  if (numOf(s.charge)) items.push({ desc: `Freight charge${s.product ? " — " + s.product : ""}`, qty: s.qty || 1, unit: numOf(s.charge) });
+  if (numOf(s.customsCharge)) items.push({ desc: "Customs clearance charges", qty: 1, unit: numOf(s.customsCharge) });
+  if (!items.length) items.push({ desc: "", qty: 1, unit: "" });
+  rpEditId = null;
+  rpSet({
+    receiptNo: rpNewNo(), issued: new Date().toISOString().slice(0, 10), trackingId: s.trackingId, orderId: s.orderId, transport: s.transport || s.service, eta: isoDay(s.eta),
+    shipType: s.shipType || s.service, status: s.status,
+    senderName: s.senderName || s.client, senderPhone: s.senderPhone, senderAddress: s.senderAddress || s.origin, originOffice: s.originOffice || s.origin,
+    receiverName: s.receiverName, receiverPhone: s.receiverPhone, receiverAddress: s.receiverAddress || s.destination, destOffice: s.destOffice || s.destination,
+    currency: curOf(s.charge), items, payMode: s.payMode, payStatus: /paid/i.test(s.payStatus || "") && !/un|part/i.test(s.payStatus) ? "Paid" : (s.payStatus || "Pending"),
+    payInfo: SETTINGS.payInfo || "", weight: s.weight
+  });
+};
+let rpExtra = {};
+function rpSet(d) {
+  rpExtra = { weight: d.weight || "" };
+  const v = (id, val) => { $r(id).value = val ?? ""; };
+  v("rpNo", d.receiptNo); v("rpDate", d.issued); v("rpTrack", d.trackingId); v("rpOrder", d.orderId); v("rpTransport", d.transport); v("rpEta", d.eta);
+  v("rpType", d.shipType); v("rpStatus", d.status);
+  v("rpFromName", d.senderName); v("rpFromPhone", d.senderPhone); v("rpFromAddr", d.senderAddress); v("rpFromOffice", d.originOffice);
+  v("rpToName", d.receiverName); v("rpToPhone", d.receiverPhone); v("rpToAddr", d.receiverAddress); v("rpToOffice", d.destOffice);
+  v("rpCur", d.currency); v("rpDisc", d.discount || ""); v("rpPayInfo", d.payInfo); v("rpNote", d.note);
+  if (d.payMode && ![...$r("rpPayMode").options].some(o => o.value === d.payMode)) $r("rpPayMode").add(new Option(d.payMode));
+  if (d.payMode) $r("rpPayMode").value = d.payMode;
+  $r("rpPayStatus").value = d.payStatus || "Pending";
+  $r("rpShowPrices").checked = !d.hidePrices; $r("rpStamp").checked = !d.noStamp;
+  rpItems = (d.items && d.items.length ? d.items : [{ desc: "", qty: 1, unit: "" }]).map(i => ({ ...i }));
+  rpDrawItems(); rpPreview();
+}
+function rpDrawItems() {
+  $r("rpItems").innerHTML = rpItems.map((it, i) => `<div class="rp-item">
+    <input type="number" min="0" step="1" value="${esc(it.qty)}" data-i="${i}" data-k="qty" placeholder="Qty"/>
+    <input value="${esc(it.desc)}" data-i="${i}" data-k="desc" placeholder="Description"/>
+    <input type="number" min="0" step="0.01" value="${esc(it.unit)}" data-i="${i}" data-k="unit" placeholder="Price"/>
+    <button type="button" onclick="rpDelItem(${i})" title="Remove">✕</button></div>`).join("");
+  $r("rpItems").querySelectorAll("input").forEach(el => el.addEventListener("input", () => { rpItems[+el.dataset.i][el.dataset.k] = el.value; }));
+}
+window.rpAddItem = function () { rpItems.push({ desc: "", qty: 1, unit: "" }); rpDrawItems(); rpPreview(); };
+window.rpDelItem = function (i) { rpItems.splice(i, 1); if (!rpItems.length) rpItems.push({ desc: "", qty: 1, unit: "" }); rpDrawItems(); rpPreview(); };
+
+function rpRead() {
+  const g = id => $r(id).value.trim();
+  const d = g("rpDate");
+  return {
+    receiptNo: g("rpNo"), issued: d ? new Date(d + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "", issuedIso: d,
+    trackingId: g("rpTrack").toUpperCase(), orderId: g("rpOrder"), transport: g("rpTransport"), eta: g("rpEta"), shipType: g("rpType"), status: g("rpStatus"), weight: rpExtra.weight || "",
+    senderName: g("rpFromName"), senderPhone: g("rpFromPhone"), senderAddress: g("rpFromAddr"), originOffice: g("rpFromOffice"),
+    receiverName: g("rpToName"), receiverPhone: g("rpToPhone"), receiverAddress: g("rpToAddr"), destOffice: g("rpToOffice"),
+    currency: g("rpCur"), discount: parseFloat($r("rpDisc").value) || 0, items: rpItems.map(i => ({ desc: String(i.desc || "").trim(), qty: +i.qty || 1, unit: +i.unit || 0 })),
+    payMode: $r("rpPayMode").value, payStatus: $r("rpPayStatus").value, payInfo: $r("rpPayInfo").value, note: g("rpNote"),
+    hidePrices: !$r("rpShowPrices").checked, noStamp: !$r("rpStamp").checked
+  };
+}
+function rpPreview() {
+  const d = rpRead();
+  const sub = d.items.reduce((a, i) => a + i.qty * i.unit, 0), tot = Math.max(0, sub - d.discount);
+  $r("rpTotal").textContent = d.hidePrices ? "Prices hidden on receipt" : `Total: ${d.currency}${tot.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  mountReceipt($r("rpPaper"), d);
+}
+window.rpDo = async function (action) {
+  const d = rpRead();
+  if (!d.trackingId) { rpMsg("Add a tracking number first.", true); return; }
+  receiptShipment = d;
+  try {
+    if (action === "pdf") await downloadReceiptPdf();
+    else if (action === "png") await downloadReceipt();
+    else if (action === "sharepdf") await shareReceiptFile("pdf");
+    else if (action === "shareimg") await shareReceiptFile("png");
+    else if (action === "print") {
+      mountReceipt($r("receiptPaper"), d);
+      $r("receiptMsg").classList.add("hidden");
+      $r("receiptModal").classList.remove("hidden");
+      await new Promise(r => setTimeout(r, 300));
+      const close = () => { closeReceipt(); window.removeEventListener("afterprint", close); };
+      window.addEventListener("afterprint", close);
+      printReceipt();
+    }
+  } catch (e) { rpMsg(e.message, true); }
+};
+function rpMsg(t, err) { const m = $r("rpMsg"); m.className = "form-status " + (err ? "error" : "success"); m.textContent = (err ? "❌ " : "✅ ") + t; m.classList.remove("hidden"); setTimeout(() => m.classList.add("hidden"), 4000); }
+
+window.rpSave = async function () {
+  const d = rpRead();
+  if (!d.trackingId) return rpMsg("Add a tracking number first.", true);
+  try {
+    const data = { ...d, items: d.items, updatedAt: serverTimestamp() };
+    if (rpEditId) await setDoc(doc(db, "receipts", rpEditId), data, { merge: true });
+    else { data.createdAt = serverTimestamp(); const r = await addDoc(collection(db, "receipts"), data); rpEditId = r.id; }
+    rpMsg("Receipt saved."); rpLoadHistory();
+  } catch (e) { rpMsg("Could not save — deploy the updated firestore.rules (" + e.message + ")", true); }
+};
+async function rpLoadHistory() {
+  const box = $r("rpHistory");
+  try {
+    const snap = await getDocs(query(collection(db, "receipts"), orderBy("createdAt", "desc"), limit(30)));
+    window.__rp = Object.fromEntries(snap.docs.map(x => [x.id, x.data()]));
+    box.innerHTML = snap.empty ? '<p class="hint">No saved receipts yet.</p>' : snap.docs.map(x => { const r = x.data(); return `<div class="rp-hist"><div><b>${esc(r.receiptNo || x.id)}</b> · ${esc(r.trackingId)}<small>${esc(r.receiverName || "—")} · ${esc(r.issued || "")}</small></div>
+      <div><button class="btn-outline" onclick="rpOpen('${x.id}')">Open</button><button class="btn-outline" onclick="rpDelete('${x.id}')">🗑</button></div></div>`; }).join("");
+  } catch (e) { box.innerHTML = '<p class="hint">Saved receipts need the updated Firestore rules (see README).</p>'; }
+}
+window.rpOpen = function (id) {
+  const r = window.__rp?.[id]; if (!r) return;
+  rpEditId = id; $r("rpPick").value = "";
+  rpSet({ ...r, issued: r.issuedIso || "" });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+window.rpDelete = async function (id) {
+  if (!confirm("Delete this saved receipt?")) return;
+  await deleteDoc(doc(db, "receipts", id)); if (rpEditId === id) rpEditId = null; rpLoadHistory();
 };

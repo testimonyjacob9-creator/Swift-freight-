@@ -50,6 +50,7 @@
         <a class="sidebar-link"        data-tab="chats"     onclick="switchTab('chats')">💬 &nbsp;Live Chat <span class="nav-badge hidden" id="badgeChats">0</span></a>
         <a class="sidebar-link"        data-tab="contacts"  onclick="switchTab('contacts')">📩 &nbsp;Contact Forms <span class="nav-badge hidden" id="badgeContacts">0</span></a>
         <a class="sidebar-link"        data-tab="shipments" onclick="switchTab('shipments')">📦 &nbsp;Shipments</a>
+        <a class="sidebar-link"        data-tab="receipts"  onclick="switchTab('receipts')">🧾 &nbsp;Receipts</a>
         <a class="sidebar-link"        data-tab="add"       onclick="switchTab('add')">➕ &nbsp;Add Shipment</a>
         <a class="sidebar-link"        data-tab="reviews"   onclick="switchTab('reviews')">⭐ &nbsp;Reviews <span class="nav-badge hidden" id="badgeReviews">0</span></a>
         <a class="sidebar-link"        data-tab="settings"  onclick="switchTab('settings')">⚙️ &nbsp;Settings</a>
@@ -147,6 +148,7 @@
           <div class="panel">
             <h3>Receipts</h3>
             <div class="form-group"><label>Website shown on receipts</label><input id="stSite" placeholder="https://yourdomain.com"/></div>
+            <div class="form-group"><label>Accepted payment methods (comma separated — only list what you really accept)</label><input id="stPayMethods" placeholder="Bank transfer, Card, PayPal"/></div>
             <div class="form-group"><label>Payment instructions (bank details, etc.)</label><textarea id="stPayInfo" rows="4" placeholder="Bank: …&#10;Account name: …&#10;Account no.: …"></textarea></div>
             <div class="form-group"><label>Terms / footer note</label><textarea id="stTerms" rows="3" placeholder="Goods are insured as per our terms of carriage…"></textarea></div>
           </div>
@@ -178,6 +180,95 @@
         </div>
         <div class="chips" id="shipFilters"></div>
         <div id="shipmentList"></div>
+      </div>
+
+      <!-- RECEIPTS TAB -->
+      <div id="tab-receipts" class="tab-content hidden">
+        <div class="dash-header"><h1>Receipts</h1>
+          <div class="dash-actions"><button class="btn-outline" onclick="rpNew()">＋ New receipt</button></div></div>
+        <div class="rp-wrap">
+          <div class="rp-form contact-form-wrap">
+            <div class="form-group"><label>Start from a shipment (optional)</label>
+              <select id="rpPick" onchange="rpFill(this.value)"><option value="">— Blank receipt —</option></select></div>
+
+            <h4 class="rp-h">Receipt details</h4>
+            <div class="form-row">
+              <div class="form-group"><label>Receipt no.</label><input id="rpNo"/></div>
+              <div class="form-group"><label>Date issued</label><input type="date" id="rpDate"/></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Tracking number</label><input id="rpTrack" style="letter-spacing:2px;text-transform:uppercase"/></div>
+              <div class="form-group"><label>Order ID</label><input id="rpOrder"/></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Mode of transport</label><input id="rpTransport" placeholder="Air freight"/></div>
+              <div class="form-group"><label>Est. delivery date</label><input type="date" id="rpEta"/></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Shipment type</label><input id="rpType" placeholder="Parcel"/></div>
+              <div class="form-group"><label>Shipment status</label><input id="rpStatus" placeholder="In Transit"/></div>
+            </div>
+
+            <h4 class="rp-h">Sender</h4>
+            <div class="form-row">
+              <div class="form-group"><label>Name</label><input id="rpFromName"/></div>
+              <div class="form-group"><label>Phone</label><input id="rpFromPhone"/></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Address</label><input id="rpFromAddr"/></div>
+              <div class="form-group"><label>Origin office</label><input id="rpFromOffice"/></div>
+            </div>
+
+            <h4 class="rp-h">Consignee</h4>
+            <div class="form-row">
+              <div class="form-group"><label>Name</label><input id="rpToName"/></div>
+              <div class="form-group"><label>Phone</label><input id="rpToPhone"/></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Address</label><input id="rpToAddr"/></div>
+              <div class="form-group"><label>Destination office</label><input id="rpToOffice"/></div>
+            </div>
+
+            <h4 class="rp-h">Prices</h4>
+            <label class="rp-check"><input type="checkbox" id="rpShowPrices" checked/> Show prices on receipt</label>
+            <div class="form-row">
+              <div class="form-group"><label>Currency symbol / code</label><input id="rpCur" placeholder="£ , $ , € , NGN"/></div>
+              <div class="form-group"><label>Discount (amount)</label><input type="number" min="0" step="0.01" id="rpDisc" placeholder="0"/></div>
+            </div>
+            <div id="rpItems"></div>
+            <button class="btn-outline" type="button" onclick="rpAddItem()" style="margin:4px 0 14px">＋ Add item</button>
+            <div class="rp-total" id="rpTotal"></div>
+
+            <h4 class="rp-h">Payment</h4>
+            <div class="form-row">
+              <div class="form-group"><label>Payment method</label><select id="rpPayMode"></select></div>
+              <div class="form-group"><label>Payment status</label>
+                <select id="rpPayStatus"><option>Pending</option><option>Paid</option><option>Partial</option><option>Unpaid</option></select></div>
+            </div>
+            <div class="form-group"><label>Payment instructions (bank details, etc.)</label><textarea id="rpPayInfo" rows="3"></textarea></div>
+
+            <h4 class="rp-h">Note</h4>
+            <div class="form-group"><textarea id="rpNote" rows="3" placeholder="Extra note shown on the receipt…"></textarea></div>
+            <label class="rp-check"><input type="checkbox" id="rpStamp" checked/> Show Swift Air Cargo stamp</label>
+
+            <div class="rp-actions">
+              <button class="btn-primary" onclick="rpSave()">💾 Save receipt</button>
+              <button class="btn-outline" onclick="rpDo('pdf')">⬇ PDF</button>
+              <button class="btn-outline" onclick="rpDo('png')">🖼 Image</button>
+              <button class="btn-outline" onclick="rpDo('print')">🖨 Print</button>
+              <button class="btn-outline" onclick="rpDo('sharepdf')">📤 Share PDF</button>
+              <button class="btn-outline" onclick="rpDo('shareimg')">📤 Share Image</button>
+            </div>
+            <div id="rpMsg" class="form-status hidden"></div>
+          </div>
+
+          <div class="rp-side">
+            <h4 class="rp-h" style="margin-top:0">Live preview</h4>
+            <div class="receipt-scroll"><div id="rpPaper" class="receipt"></div></div>
+            <h4 class="rp-h">Saved receipts</h4>
+            <div id="rpHistory"></div>
+          </div>
+        </div>
       </div>
 
       <!-- ADD SHIPMENT TAB -->
@@ -362,10 +453,12 @@
     <div class="modal-card receipt-card">
       <button class="modal-close" onclick="closeReceipt()" aria-label="Close">✕</button>
       <div class="receipt-actions top">
-        <button class="btn-primary" onclick="downloadReceiptPdf()">⬇ Download PDF</button>
+        <button class="btn-outline" onclick="downloadReceiptPdf()">⬇ Download PDF</button>
         <button class="btn-outline" onclick="printReceipt()">🖨 Print</button>
         <button class="btn-outline" onclick="downloadReceipt()">🖼 Image</button>
-        <button class="btn-outline" onclick="shareReceiptWa()">💬 Send on WhatsApp</button>
+        <button class="btn-primary" onclick="shareReceiptFile('pdf')">📤 Share PDF</button>
+        <button class="btn-outline" onclick="shareReceiptFile('png')">📤 Share Image</button>
+        <button class="btn-outline" onclick="shareReceiptWa()">💬 WhatsApp link</button>
       </div>
       <div class="receipt-scroll"><div id="receiptPaper" class="receipt"></div></div>
       <div id="receiptMsg" class="form-status hidden"></div>
