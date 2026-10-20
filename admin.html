@@ -80,8 +80,11 @@
           <div class="contact-form-wrap">
             <div class="form-row">
               <div class="form-group">
-                <label>Tracking ID</label>
-                <input type="text" id="sTrackId" placeholder="SF-2026-XXXXX"/>
+                <label>Tracking ID <small style="color:var(--text3);font-weight:400">(12 letters &amp; numbers)</small></label>
+                <div style="display:flex;gap:8px">
+                  <input type="text" id="sTrackId" placeholder="7K2M9QX4B8TD" maxlength="12" autocomplete="off" spellcheck="false" style="flex:1;letter-spacing:2px;font-weight:600;text-transform:uppercase"/>
+                  <button type="button" class="btn-outline" onclick="newTrackingId()" title="Generate a new tracking ID" style="padding:0 14px">🔄</button>
+                </div>
               </div>
               <div class="form-group">
                 <label>Client Name</label>

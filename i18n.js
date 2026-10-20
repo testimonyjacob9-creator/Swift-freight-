@@ -40,7 +40,7 @@ const translations = {
     track_tag:   "REAL-TIME",
     track_title: "Track Your Shipment",
     track_sub:   "Enter your tracking number to get instant updates on your cargo location.",
-    track_placeholder: "Enter tracking ID e.g. SF-2026-XXXXX",
+    track_placeholder: "Enter 12-character tracking number",
     track_btn:   "Track Now",
 
     why_tag:   "WHY SWIFTFREIGHT",
@@ -121,7 +121,7 @@ const translations = {
     track_tag:   "TEMPS RÉEL",
     track_title: "Suivez votre expédition",
     track_sub:   "Entrez votre numéro de suivi pour obtenir des mises à jour instantanées.",
-    track_placeholder: "Entrez l'ID de suivi ex. SF-2026-XXXXX",
+    track_placeholder: "Numéro de suivi à 12 caractères",
     track_btn:   "Suivre",
 
     why_tag:   "POURQUOI SWIFTFREIGHT",
@@ -202,7 +202,7 @@ const translations = {
     track_tag:   "TIEMPO REAL",
     track_title: "Rastrea tu Envío",
     track_sub:   "Ingresa tu número de seguimiento para actualizaciones instantáneas.",
-    track_placeholder: "Ingresa ID de seguimiento ej. SF-2026-XXXXX",
+    track_placeholder: "Número de seguimiento de 12 caracteres",
     track_btn:   "Rastrear",
 
     why_tag:   "POR QUÉ SWIFTFREIGHT",
@@ -248,42 +248,50 @@ const translations = {
   }
 };
 
-let currentLang = localStorage.getItem("sf_lang") || "en";
+// Merge extra languages / keys
+const LANGS = { en:"English", fr:"Français", es:"Español", pt:"Português", de:"Deutsch", ar:"العربية", zh:"中文" };
+Object.entries(window.__i18nExtra || {}).forEach(([l, d]) => { translations[l] = Object.assign(translations[l] || {}, d); });
+
+let currentLang = localStorage.getItem("sf_lang");
+if (!translations[currentLang]) {
+  const nav = (navigator.language || "en").slice(0, 2).toLowerCase();
+  currentLang = translations[nav] ? nav : "en";
+}
 
 function applyTranslations(lang) {
-  const t = translations[lang];
-  if (!t) return;
+  const base = translations.en;
+  const t = Object.assign({}, base, translations[lang] || {});
   currentLang = lang;
   localStorage.setItem("sf_lang", lang);
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
 
-  // Text content
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
-    if (t[key] !== undefined) {
-      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
-        el.placeholder = t[key];
-      } else {
-        el.innerHTML = t[key].replace(/\n/g, "<br/>");
-      }
+    if (t[key] === undefined) return;
+    if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") { el.placeholder = t[key]; return; }
+    const parts = t[key].split("\n");
+    if ((key === "hero_title" || key === "contact_hero_title") && parts.length > 1) {
+      el.innerHTML = parts[0] + '<br/><span class="accent">' + parts.slice(1).join("<br/>") + "</span>";
+    } else {
+      el.innerHTML = parts.join("<br/>");
     }
   });
-
-  // Placeholders
   document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
     const key = el.getAttribute("data-i18n-placeholder");
     if (t[key]) el.placeholder = t[key];
   });
-
-  // Lang buttons
-  document.querySelectorAll(".lang-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.lang === lang);
-  });
+  const sel = document.getElementById("langSelect");
+  if (sel) sel.value = lang;
 }
+window.sfT = key => (translations[currentLang] && translations[currentLang][key]) || translations.en[key] || "";
 
 document.addEventListener("DOMContentLoaded", () => {
+  const box = document.getElementById("langSwitcher");
+  if (box) {
+    box.innerHTML = '<select class="lang-select" id="langSelect" aria-label="Language">' +
+      Object.entries(LANGS).map(([c, n]) => `<option value="${c}">${n}</option>`).join("") + "</select>";
+    box.querySelector("select").addEventListener("change", e => applyTranslations(e.target.value));
+  }
   applyTranslations(currentLang);
-
-  document.querySelectorAll(".lang-btn").forEach(btn => {
-    btn.addEventListener("click", () => applyTranslations(btn.dataset.lang));
-  });
 });

@@ -4,10 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SwiftFreight – Global Logistics Solutions</title>
+    <meta name="description" content="SwiftFreight – global air, sea and road freight, customs clearance and live shipment tracking in 180+ countries."/>
+  <meta name="theme-color" content="#080809"/>
+  <meta property="og:title" content="SwiftFreight – Global Logistics"/>
+  <meta property="og:description" content="Air, sea and road freight with live tracking worldwide."/>
+  <meta property="og:type" content="website"/>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23080809%27/%3E%3Cpath d=%27M32 10l18 10v24L32 54 14 44V20z%27 fill=%27none%27 stroke=%27%23f59e0b%27 stroke-width=%276%27/%3E%3C/svg%3E"/>
+  <script src="theme.js"></script>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <link rel="stylesheet" href="enhance.css"/>
 </head>
 <body>
   <!-- NAV -->
@@ -22,7 +30,7 @@
         <li><a href="#services" data-i18n="nav_services">Services</a></li>
         <li><a href="#about" data-i18n="nav_about">About</a></li>
         <li><a href="#tracking" data-i18n="nav_tracking">Track</a></li>
-        <li><a href="#reviews">Reviews</a></li>
+        <li><a href="#reviews" data-i18n="nav_reviews">Reviews</a></li>
         <li><a href="contact.html" class="btn-nav" data-i18n="nav_contact">Contact Us</a></li>
       </ul>
       <div class="nav-right">
@@ -52,9 +60,9 @@
         <a href="#tracking" class="btn-outline" data-i18n="hero_cta2">Track Shipment</a>
       </div>
       <div class="hero-stats">
-        <div class="stat"><span class="stat-num">180+</span><span class="stat-label" data-i18n="stat1">Countries</span></div>
-        <div class="stat"><span class="stat-num">50K+</span><span class="stat-label" data-i18n="stat2">Deliveries/mo</span></div>
-        <div class="stat"><span class="stat-num">99.8%</span><span class="stat-label" data-i18n="stat3">On-Time Rate</span></div>
+        <div class="stat"><span class="stat-num" data-count="180" data-suffix="+">180+</span><span class="stat-label" data-i18n="stat1">Countries</span></div>
+        <div class="stat"><span class="stat-num" data-count="50" data-suffix="K+">50K+</span><span class="stat-label" data-i18n="stat2">Deliveries/mo</span></div>
+        <div class="stat"><span class="stat-num" data-count="99.8" data-suffix="%">99.8%</span><span class="stat-label" data-i18n="stat3">On-Time Rate</span></div>
       </div>
     </div>
     <div class="hero-visual">
@@ -91,43 +99,43 @@
   <!-- SERVICES -->
   <section class="services" id="services">
     <div class="container">
-      <div class="section-header">
+      <div class="section-header reveal">
         <p class="section-tag" data-i18n="services_tag">WHAT WE DO</p>
         <h2 data-i18n="services_title">End-to-End Logistics Services</h2>
         <p class="section-sub" data-i18n="services_sub">From pickup to last-mile delivery, every step is tracked and optimized.</p>
       </div>
       <div class="services-grid">
-        <div class="service-card">
+        <div class="service-card reveal">
           <span class="service-icon">✈️</span>
           <h3 data-i18n="svc1_title">Air Freight</h3>
           <p data-i18n="svc1_desc">Express global air cargo with guaranteed transit times to 180+ destinations.</p>
           <a href="contact.html" class="service-link" data-i18n="svc_link">Learn More →</a>
         </div>
-        <div class="service-card featured">
+        <div class="service-card featured reveal">
           <span class="service-icon">🚢</span>
           <h3 data-i18n="svc2_title">Sea Freight</h3>
           <p data-i18n="svc2_desc">Full container load (FCL) and less-than-container (LCL) ocean shipping solutions.</p>
           <a href="contact.html" class="service-link" data-i18n="svc_link">Learn More →</a>
         </div>
-        <div class="service-card">
+        <div class="service-card reveal">
           <span class="service-icon">🚚</span>
           <h3 data-i18n="svc3_title">Road Haulage</h3>
           <p data-i18n="svc3_desc">Domestic and cross-border trucking with real-time GPS tracking on every load.</p>
           <a href="contact.html" class="service-link" data-i18n="svc_link">Learn More →</a>
         </div>
-        <div class="service-card">
+        <div class="service-card reveal">
           <span class="service-icon">🏭</span>
           <h3 data-i18n="svc4_title">Warehousing</h3>
           <p data-i18n="svc4_desc">Secure bonded warehouses with inventory management and fulfillment services.</p>
           <a href="contact.html" class="service-link" data-i18n="svc_link">Learn More →</a>
         </div>
-        <div class="service-card">
+        <div class="service-card reveal">
           <span class="service-icon">🧊</span>
           <h3 data-i18n="svc5_title">Cold Chain</h3>
           <p data-i18n="svc5_desc">Temperature-controlled logistics for pharma, food, and sensitive goods.</p>
           <a href="contact.html" class="service-link" data-i18n="svc_link">Learn More →</a>
         </div>
-        <div class="service-card">
+        <div class="service-card reveal">
           <span class="service-icon">📋</span>
           <h3 data-i18n="svc6_title">Customs Brokerage</h3>
           <p data-i18n="svc6_desc">Expert customs clearance, documentation, and compliance in every country.</p>
@@ -141,18 +149,19 @@
   <section class="tracking-section" id="tracking">
     <div class="container">
       <div class="track-card">
-        <div class="track-left">
+        <div class="track-left reveal from-left">
           <p class="section-tag" data-i18n="track_tag">REAL-TIME</p>
           <h2 data-i18n="track_title">Track Your Shipment</h2>
           <p data-i18n="track_sub">Enter your tracking number to get instant updates on your cargo location.</p>
           <div class="track-input-group">
-            <input type="text" id="trackInput" placeholder="Enter tracking ID e.g. SF-2026-XXXXX" data-i18n-placeholder="track_placeholder"/>
+            <input type="text" id="trackInput" placeholder="Enter 12-character tracking number" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" data-i18n-placeholder="track_placeholder"/>
             <button onclick="trackShipment()" data-i18n="track_btn">Track Now</button>
           </div>
           <div id="trackResult" class="track-result hidden"></div>
-          <p style="font-size:0.8rem;color:var(--text3);margin-top:12px">Opens your full shipment details on a dedicated tracking page.</p>
+          <p class="track-hint" data-i18n="track_hint">Your tracking number is 12 letters and numbers, e.g. 7K2M9QX4B8TD.</p>
         </div>
-        <div class="track-right">
+        <div class="track-right reveal from-right">
+          <p class="track-example" data-i18n="track_example">Example journey</p>
           <div class="track-steps">
             <div class="step done"><span class="step-dot"></span><div><strong>Picked Up</strong><small>Minnesota, USA</small></div></div>
             <div class="step done"><span class="step-dot"></span><div><strong>In Transit</strong><small>Accra Hub</small></div></div>
@@ -168,15 +177,15 @@
   <!-- WHY US -->
   <section class="why-us" id="about">
     <div class="container">
-      <div class="section-header">
+      <div class="section-header reveal">
         <p class="section-tag" data-i18n="why_tag">WHY SWIFTFREIGHT</p>
         <h2 data-i18n="why_title">The Freight Partner You Can Trust</h2>
       </div>
       <div class="why-grid">
-        <div class="why-card"><div class="why-icon">⚡</div><h4 data-i18n="why1_title">Lightning Fast</h4><p data-i18n="why1_desc">Same-day processing and 24/7 operations ensure your cargo never waits.</p></div>
-        <div class="why-card"><div class="why-icon">🔒</div><h4 data-i18n="why2_title">Fully Insured</h4><p data-i18n="why2_desc">Every shipment is covered with comprehensive cargo insurance globally.</p></div>
-        <div class="why-card"><div class="why-icon">📍</div><h4 data-i18n="why3_title">Live Tracking</h4><p data-i18n="why3_desc">Real-time GPS visibility on every shipment, every mile of the journey.</p></div>
-        <div class="why-card"><div class="why-icon">🌐</div><h4 data-i18n="why4_title">Global Network</h4><p data-i18n="why4_desc">180+ country coverage with trusted local partners in every region.</p></div>
+        <div class="why-card reveal zoom"><div class="why-icon">⚡</div><h4 data-i18n="why1_title">Lightning Fast</h4><p data-i18n="why1_desc">Same-day processing and 24/7 operations ensure your cargo never waits.</p></div>
+        <div class="why-card reveal zoom"><div class="why-icon">🔒</div><h4 data-i18n="why2_title">Fully Insured</h4><p data-i18n="why2_desc">Every shipment is covered with comprehensive cargo insurance globally.</p></div>
+        <div class="why-card reveal zoom"><div class="why-icon">📍</div><h4 data-i18n="why3_title">Live Tracking</h4><p data-i18n="why3_desc">Real-time GPS visibility on every shipment, every mile of the journey.</p></div>
+        <div class="why-card reveal zoom"><div class="why-icon">🌐</div><h4 data-i18n="why4_title">Global Network</h4><p data-i18n="why4_desc">180+ country coverage with trusted local partners in every region.</p></div>
       </div>
     </div>
   </section>
@@ -184,13 +193,13 @@
   <!-- REVIEWS -->
   <section class="reviews" id="reviews" aria-labelledby="reviewsTitle">
     <div class="container">
-      <div class="section-header">
-        <p class="section-tag">CLIENT FEEDBACK</p>
-        <h2 id="reviewsTitle">Trusted by shippers who can't afford delays</h2>
-        <p class="section-sub">What importers, exporters and online sellers say after their first shipment.</p>
+      <div class="section-header reveal">
+        <p class="section-tag" data-i18n="reviews_tag">CLIENT FEEDBACK</p>
+        <h2 id="reviewsTitle" data-i18n="reviews_title">Trusted by shippers who can't afford delays</h2>
+        <p class="section-sub" data-i18n="reviews_sub">What importers, exporters and online sellers say after their first shipment.</p>
       </div>
       <div class="reviews-grid">
-        <figure class="review-card">
+        <figure class="review-card reveal">
           <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
           <blockquote>Our fabric shipments used to arrive with no warning. Now every handover shows up in tracking and the delivery date has held three months running.</blockquote>
           <figcaption>
@@ -198,7 +207,7 @@
             <span><strong>Amara Okafor</strong><small>Operations Manager, Lagos Textiles</small></span>
           </figcaption>
         </figure>
-        <figure class="review-card">
+        <figure class="review-card reveal">
           <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
           <blockquote>Customs paperwork was handled before the cargo landed. That alone saved us a week on a time-critical machinery order.</blockquote>
           <figcaption>
@@ -206,7 +215,7 @@
             <span><strong>Daniel Weber</strong><small>Procurement Lead, Weber Engineering</small></span>
           </figcaption>
         </figure>
-        <figure class="review-card">
+        <figure class="review-card reveal">
           <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
           <blockquote>Fragile pieces, three countries, zero breakages. The photos at pickup gave my customers real confidence.</blockquote>
           <figcaption>
@@ -214,7 +223,7 @@
             <span><strong>Sofia Martins</strong><small>Founder, Casa Martins Ceramics</small></span>
           </figcaption>
         </figure>
-        <figure class="review-card">
+        <figure class="review-card reveal">
           <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
           <blockquote>Temperature logs on the cold-chain run were complete and on time, which is what our auditors look at first.</blockquote>
           <figcaption>
@@ -222,7 +231,7 @@
             <span><strong>James Mensah</strong><small>Supply Chain Director, Accra Pharma</small></span>
           </figcaption>
         </figure>
-        <figure class="review-card">
+        <figure class="review-card reveal">
           <div class="review-stars" role="img" aria-label="4 out of 5 stars">★★★★☆</div>
           <blockquote>Quotes are clear and the team answers quickly. One delay at a hub, but we were told the same day, not after.</blockquote>
           <figcaption>
@@ -230,7 +239,7 @@
             <span><strong>Elena Petrova</strong><small>Logistics Coordinator, Nordic Outdoor</small></span>
           </figcaption>
         </figure>
-        <figure class="review-card">
+        <figure class="review-card reveal">
           <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
           <blockquote>I send parcels weekly. The live map means I stop getting 'where is my order?' emails.</blockquote>
           <figcaption>
@@ -239,13 +248,13 @@
           </figcaption>
         </figure>
       </div>
-      <p class="reviews-note">Sample testimonials shown for demonstration. Portraits via <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a> (free Unsplash licence).</p>
+      <p class="reviews-note"><span data-i18n="reviews_note">Sample testimonials shown for demonstration.</span> Portraits via <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a> (free Unsplash licence).</p>
     </div>
   </section>
 
   <!-- CTA BANNER -->
   <section class="cta-banner">
-    <div class="cta-inner">
+    <div class="cta-inner reveal zoom">
       <h2 data-i18n="cta_title">Ready to Ship Smarter?</h2>
       <p data-i18n="cta_sub">Join 10,000+ businesses that trust SwiftFreight for their logistics needs.</p>
       <a href="contact.html" class="btn-primary large" data-i18n="cta_btn">Get Started Today</a>
@@ -280,10 +289,11 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p>© 2026 SwiftFreight. All rights reserved.</p>
+      <p>© <span data-year>2026</span> SwiftFreight. <span data-i18n="footer_rights">All rights reserved.</span></p>
     </div>
   </footer>
 
+  <script src="i18n-more.js"></script>
   <script src="i18n.js"></script>
   <script type="module" src="main.js"></script>
 </body>

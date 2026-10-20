@@ -55,8 +55,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function handleSearchClick() {
-  const id = inputEl.value.trim().toUpperCase();
-  if (!id) { showIdle("⚠️ Please enter a tracking ID."); return; }
+  const id = inputEl.value.replace(/\s+/g, "").toUpperCase();
+  if (!id) { showIdle((window.sfT && window.sfT("track_empty")) || "⚠️ Please enter your tracking number."); return; }
   history.replaceState(null, "", `track.html?id=${encodeURIComponent(id)}`);
   runSearch(id);
 }

@@ -25,23 +25,38 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  // ── Scroll reveal ──
-  const observer = new IntersectionObserver(entries => {
+  // ── Scroll reveal (class-based, respects reduced motion) ──
+  const reveals = document.querySelectorAll(".reveal");
+  const io = new IntersectionObserver(entries => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.style.opacity   = "1";
-        entry.target.style.transform = "translateY(0)";
-        observer.unobserve(entry.target);
-      }
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("in");
+      io.unobserve(entry.target);
     });
-  }, { threshold: 0.1 });
-
-  document.querySelectorAll(".service-card, .why-card, .info-card").forEach(el => {
-    el.style.opacity    = "0";
-    el.style.transform  = "translateY(20px)";
-    el.style.transition = "opacity 0.5s ease, transform 0.5s ease";
-    observer.observe(el);
+  }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+  reveals.forEach((el, i) => {
+    el.style.setProperty("--d", ((i % 3) * 0.08) + "s");
+    io.observe(el);
   });
+
+  // ── Animated stat counters ──
+  const counters = document.querySelectorAll("[data-count]");
+  const cio = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target; cio.unobserve(el);
+      const end = parseFloat(el.dataset.count), suffix = el.dataset.suffix || "";
+      const dec = (el.dataset.count.split(".")[1] || "").length;
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const t0 = performance.now(), dur = 1400;
+      (function tick(now) {
+        const p = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3);
+        el.textContent = (end * e).toFixed(dec) + suffix;
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
+    });
+  }, { threshold: 0.6 });
+  counters.forEach(el => cio.observe(el));
 
   // ── Smooth scroll for anchor links ──
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -69,12 +84,12 @@ window.trackShipment = function () {
   const result = document.getElementById("trackResult");
   if (!input) return;
 
-  const id = input.value.trim().toUpperCase();
+  const id = input.value.replace(/\s+/g, "").toUpperCase();
 
   if (!id) {
     if (result) {
       result.className  = "track-result error";
-      result.textContent = "⚠️ Please enter a tracking ID.";
+      result.textContent = (window.sfT && window.sfT("track_empty")) || "⚠️ Please enter your tracking number.";
       result.classList.remove("hidden");
     }
     return;

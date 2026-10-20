@@ -508,6 +508,28 @@ window.updateShipmentStatus = async function () {
   }
 };
 
+// ─── Tracking ID generator (12 chars, letters + numbers) ───
+const TID_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I to avoid mix-ups
+function genTrackingId() {
+  for (;;) {
+    const buf = new Uint32Array(12);
+    crypto.getRandomValues(buf);
+    const id = Array.from(buf, n => TID_CHARS[n % TID_CHARS.length]).join("");
+    if (/[A-Z]/.test(id) && /[0-9]/.test(id) && !shipments.some(s => s.trackingId === id)) return id;
+  }
+}
+window.newTrackingId = function () {
+  const el = document.getElementById("sTrackId");
+  if (el) el.value = genTrackingId();
+};
+document.addEventListener("DOMContentLoaded", () => {
+  const el = document.getElementById("sTrackId");
+  if (el) {
+    el.value = genTrackingId();
+    el.addEventListener("input", () => { el.value = el.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12); });
+  }
+});
+
 // ─── Add Shipment ─────────────────────────────────────
 window.addShipment = async function () {
   const trackingId = document.getElementById("sTrackId").value.trim().toUpperCase();
@@ -515,9 +537,15 @@ window.addShipment = async function () {
   const status     = document.getElementById("sStatus").value;
   const statusEl   = document.getElementById("addStatus");
 
-  if (!trackingId) {
+  if (!/^[A-Z0-9]{12}$/.test(trackingId)) {
     statusEl.className = "form-status error";
-    statusEl.textContent = "⚠️ Tracking ID is required.";
+    statusEl.textContent = "⚠️ Tracking ID must be exactly 12 letters/numbers. Tap 🔄 to generate one.";
+    statusEl.classList.remove("hidden");
+    return;
+  }
+  if (shipments.some(s => s.trackingId === trackingId)) {
+    statusEl.className = "form-status error";
+    statusEl.textContent = "⚠️ That tracking ID already exists. Tap 🔄 for a new one.";
     statusEl.classList.remove("hidden");
     return;
   }
@@ -580,6 +608,7 @@ window.addShipment = async function () {
     document.getElementById("sService").selectedIndex = 0;
     resetAddMap();
     addPending = []; drawAdd();
+    window.newTrackingId();
 
   } catch (e) {
     statusEl.className = "form-status error";
