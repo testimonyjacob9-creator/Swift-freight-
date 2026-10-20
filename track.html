@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Track Your Shipment – SwiftFreight</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="track.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+</head>
+<body>
+  <!-- NAV -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⬡</span>
+        Swift<span class="logo-accent">Freight</span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+        <li><a href="index.html#services" data-i18n="nav_services">Services</a></li>
+        <li><a href="index.html#about" data-i18n="nav_about">About</a></li>
+        <li><a href="track.html" class="active" data-i18n="nav_tracking">Track</a></li>
+        <li><a href="contact.html" class="btn-nav" data-i18n="nav_contact">Contact Us</a></li>
+      </ul>
+      <div class="nav-right">
+        <div class="lang-switcher" id="langSwitcher">
+          <button class="lang-btn active" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="fr">FR</button>
+          <button class="lang-btn" data-lang="es">ES</button>
+        </div>
+        <button class="hamburger" id="hamburger">&#9776;</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- SEARCH HEADER -->
+  <section class="track-page-hero">
+    <p class="section-tag" data-i18n="track_tag">REAL-TIME</p>
+    <h1 data-i18n="track_title">Track Your Shipment</h1>
+    <p data-i18n="track_sub">Enter your tracking number to get instant updates on your cargo location.</p>
+    <div class="track-page-search">
+      <input type="text" id="tpInput" placeholder="Enter tracking ID e.g. SF-2026-XXXXX" data-i18n-placeholder="track_placeholder"/>
+      <button id="tpSearchBtn" data-i18n="track_btn">Track Now</button>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="track-page-body">
+    <div id="tpResult"></div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="logo">⬡ Swift<span class="logo-accent">Freight</span></span>
+        <p data-i18n="footer_desc">Moving the world's cargo with precision and speed since 2010.</p>
+      </div>
+      <div class="footer-links">
+        <h4 data-i18n="footer_company">Company</h4>
+        <a href="index.html#about" data-i18n="footer_about">About Us</a>
+        <a href="index.html#services" data-i18n="footer_services">Services</a>
+        <a href="contact.html" data-i18n="footer_contact">Contact</a>
+      </div>
+      <div class="footer-links">
+        <h4 data-i18n="footer_services_title">Services</h4>
+        <a href="index.html#services">Air Freight</a>
+        <a href="index.html#services">Sea Freight</a>
+        <a href="index.html#services">Road Haulage</a>
+        <a href="index.html#services">Warehousing</a>
+      </div>
+      <div class="footer-contact">
+        <h4 data-i18n="footer_reach">Get in Touch</h4>
+        <p>📧 swiftfreightlogistics2026@gmail.com</p>
+        <p>📱 Signal: swiftfreight.43</p>
+        <p>📍 New York City, USA</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 SwiftFreight. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="i18n.js"></script>
+  <script type="module" src="main.js"></script>
+  <script type="module" src="track.js"></script>
+</body>
+</html>
