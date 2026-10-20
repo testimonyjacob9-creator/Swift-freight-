@@ -16,6 +16,8 @@ import {
   collection, query, orderBy, getDocs,
   doc, updateDoc, addDoc, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 // ─── Firebase init ────────────────────────────────────
 const firebaseConfig = {
@@ -31,6 +33,10 @@ const firebaseConfig = {
 const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
+const storage = getStorage(app);
+
+// Escape untrusted text before it goes into innerHTML
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 // ─── State ────────────────────────────────────────────
 let contacts  = [];   // raw Firestore docs: { id, ...data }
@@ -159,20 +165,20 @@ window.renderContacts = function () {
   }
 
   list.innerHTML = filtered.map(c => `
-    <div class="submission-card ${c.read ? "" : "unread"}" onclick="openContact('${c.id}')">
+    <div class="submission-card ${c.read ? "" : "unread"}" onclick="openContact('${esc(c.id)}')">
       <div class="sub-header">
         <span class="sub-name">
-          ${c.name}
+          ${esc(c.name)}
           ${!c.read ? '<span class="badge-new">NEW</span>' : ""}
         </span>
         <span class="sub-date">${fmtDate(c.timestamp)}</span>
       </div>
       <div class="sub-meta">
-        <span>📧 ${c.email}</span>
-        ${c.phone   ? `<span>📞 ${c.phone}</span>` : ""}
-        ${c.service ? `<span>📦 ${c.service}</span>` : ""}
+        <span>📧 ${esc(c.email)}</span>
+        ${c.phone ? `<span>📞 ${esc(c.phone)}</span>` : ""}
+        ${c.service ? `<span>📦 ${esc(c.service)}</span>` : ""}
       </div>
-      <div class="sub-preview">${(c.message || "").slice(0, 140)}${c.message?.length > 140 ? "…" : ""}</div>
+      <div class="sub-preview">${esc((c.message || "").slice(0, 140))}${c.message?.length > 140 ? "…" : ""}</div>
     </div>
   `).join("");
 };
@@ -194,14 +200,14 @@ window.openContact = async function (id) {
 
   document.getElementById("mName").textContent = c.name;
   document.getElementById("mGrid").innerHTML = `
-    <div><strong>Email</strong>${c.email}</div>
+    <div><strong>Email</strong>${esc(c.email)}</div>
     <div><strong>Phone</strong>${c.phone || "—"}</div>
     <div><strong>Service</strong>${c.service || "—"}</div>
     <div><strong>Submitted</strong>${fmtDate(c.timestamp)}</div>
-    ${c.subject ? `<div style="grid-column:1/-1"><strong>Subject</strong>${c.subject}</div>` : ""}
+    ${c.subject ? `<div style="grid-column:1/-1"><strong>Subject</strong>${esc(c.subject)}</div>` : ""}
   `;
   document.getElementById("mMessage").innerHTML =
-    `<strong>Message</strong><p>${(c.message || "").replace(/\n/g, "<br/>")}</p>`;
+    `<strong>Message</strong><p>${esc(c.message || "").replace(/\n/g, "<br/>")}</p>`;
 
   document.getElementById("contactModal").classList.remove("hidden");
 
@@ -223,6 +229,7 @@ window.closeModal = function (e) {
   if (e.target.classList.contains("modal")) {
     document.getElementById("contactModal").classList.add("hidden");
     document.getElementById("shipModal").classList.add("hidden");
+    document.getElementById("receiptModal").classList.add("hidden");
     if (smMap) { smMap.remove(); smMap = null; smMarker = null; }
   }
 };
@@ -264,20 +271,20 @@ window.renderShipments = function () {
   };
 
   list.innerHTML = filtered.map(s => `
-    <div class="submission-card" onclick="openShipment('${s.id}')">
+    <div class="submission-card" onclick="openShipment('${esc(s.id)}')">
       <div class="sub-header">
         <span class="sub-name" style="font-family:var(--font-display);letter-spacing:1px;font-size:1.05rem">
-          ${s.trackingId || "—"}
+          ${esc(s.trackingId || "—")}
         </span>
         <span style="font-size:0.8rem;font-weight:700;padding:3px 12px;border-radius:50px;background:rgba(255,255,255,0.06);color:${statusColor[s.status] || "var(--text2)"}">
           ${s.status || "—"}
         </span>
       </div>
       <div class="sub-meta">
-        ${s.client      ? `<span>👤 ${s.client}</span>`      : ""}
-        ${s.origin      ? `<span>🛫 ${s.origin}</span>`      : ""}
-        ${s.destination ? `<span>🛬 ${s.destination}</span>` : ""}
-        ${s.service     ? `<span>🚚 ${s.service}</span>`     : ""}
+        ${s.client      ? `<span>👤 ${esc(s.client)}</span>`      : ""}
+        ${s.origin      ? `<span>🛫 ${esc(s.origin)}</span>`      : ""}
+        ${s.destination ? `<span>🛬 ${esc(s.destination)}</span>` : ""}
+        ${s.service     ? `<span>🚚 ${esc(s.service)}</span>`     : ""}
       </div>
       <div class="sub-preview">
         📍 ${s.location || "—"} &nbsp;|&nbsp; ETA: ${fmtDate(s.eta)} &nbsp;|&nbsp; Updated: ${fmtDate(s.lastUpdate)}
@@ -301,36 +308,22 @@ window.openShipment = function (id) {
         <option value="Air Freight"   ${s.service==="Air Freight"   ? "selected":""}>✈️ Air Freight</option>
         <option value="Sea Freight"   ${s.service==="Sea Freight"   ? "selected":""}>🚢 Sea Freight</option>
         <option value="Road Haulage"  ${s.service==="Road Haulage"  ? "selected":""}>🚚 Road Haulage</option>
+        <option value="Warehousing"   ${s.service==="Warehousing"   ? "selected":""}>🏭 Warehousing</option>
+        <option value="Cold Chain"    ${s.service==="Cold Chain"    ? "selected":""}>🧊 Cold Chain</option>
       </select>
     </div>
     <div class="form-group"><label>Origin</label><input type="text" id="smOrigin" value="${escAttr(s.origin)}"/></div>
     <div class="form-group"><label>Destination</label><input type="text" id="smDest" value="${escAttr(s.destination)}"/></div>
     <div class="form-group"><label>Weight</label><input type="text" id="smWeight" value="${escAttr(s.weight)}"/></div>
     <div class="form-group"><label>ETA</label><input type="datetime-local" id="smEta" value="${toLocalInput(s.eta)}"/></div>
+    <div class="form-group"><label>Freight charge</label><input type="text" id="smCharge" value="${escAttr(s.charge)}" placeholder="USD 480.00"/></div>
   `;
 
   // ── 3D live-position map (MapLibre GL, no API key) ──
   document.getElementById("smMapWrap").classList.remove("hidden");
   initShipmentMap(s);
 
-  // ── Photos ──
-  const photosWrap = document.getElementById("smPhotosWrap");
-  const photosGrid = document.getElementById("smPhotosGrid");
-  const photos = s.photos;
-  if (photos && photos.length) {
-    photosGrid.innerHTML = photos.map(url => `
-      <a href="${url}" target="_blank" rel="noopener" style="display:block;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);transition:border-color 0.2s"
-         onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <img src="${url}" alt="Shipment photo"
-             style="width:100%;height:130px;object-fit:cover;display:block"
-             onerror="this.parentElement.style.display='none'"/>
-      </a>
-    `).join("");
-    photosWrap.classList.remove("hidden");
-  } else {
-    photosGrid.innerHTML = "";
-    photosWrap.classList.add("hidden");
-  }
+  renderModalPhotos(s);
 
   // Pre-fill update controls
   document.getElementById("smStatusSelect").value = s.status || "In Transit";
@@ -467,9 +460,13 @@ window.updateShipmentStatus = async function () {
   const dest    = document.getElementById("smDest").value.trim();
   const weight  = document.getElementById("smWeight").value.trim();
   const etaRaw  = document.getElementById("smEta").value;
+  const charge  = document.getElementById("smCharge").value.trim();
 
   try {
+    const photos = await commitModalPhotos(statusEl);
     const payload = {
+      photos: photos.length ? photos : null,
+      charge: charge || null,
       status,
       location: location || null,
       client:      client  || null,
@@ -490,8 +487,8 @@ window.updateShipmentStatus = async function () {
     const s = shipments.find(x => x.id === currentShipmentId);
     if (s) {
       Object.assign(s, {
-        status, location, client, service,
-        origin, destination: dest, weight
+        status, location, client, service, charge,
+        origin, destination: dest, weight, photos
       });
       if (smCoords) { s.lat = smCoords.lat; s.lng = smCoords.lng; }
     }
@@ -532,14 +529,11 @@ window.addShipment = async function () {
     document.getElementById(`step${i}`).value.trim()
   );
 
-  const photos = [0,1,2,3]
-    .map(i => document.getElementById(`photo${i}`)?.value.trim())
-    .filter(Boolean);
-
-  const badPhoto = photos.find(url => /unsplash\.com\/photos\//.test(url) && !/images\.unsplash\.com/.test(url));
-  if (badPhoto) {
+  let photos = [];
+  try { photos = await uploadPending(addPending, trackingId, statusEl); }
+  catch (e) {
     statusEl.className = "form-status error";
-    statusEl.textContent = `⚠️ That's an Unsplash page link, not an image link: ${badPhoto} — open the photo, right‑click it, choose "Copy image address" (should start with images.unsplash.com), then paste that instead.`;
+    statusEl.textContent = `❌ Photo upload failed: ${e.message}`;
     statusEl.classList.remove("hidden");
     return;
   }
@@ -553,6 +547,7 @@ window.addShipment = async function () {
     location:    document.getElementById("sLocation").value.trim() || null,
     service:     document.getElementById("sService").value         || null,
     weight:      document.getElementById("sWeight").value.trim()   || null,
+    charge:      document.getElementById("sCharge").value.trim()   || null,
     eta:         etaRaw        ? Timestamp.fromDate(new Date(etaRaw))        : null,
     lastUpdate:  lastUpdateRaw ? Timestamp.fromDate(new Date(lastUpdateRaw)) : serverTimestamp(),
     steps:       steps.some(s => s) ? steps : null,
@@ -577,13 +572,14 @@ window.addShipment = async function () {
     // Clear form
     ["sTrackId","sClient","sOrigin","sDest","sLocation","sWeight","sEta","sLastUpdate",
      "step0","step1","step2","step3","step4",
-     "photo0","photo1","photo2","photo3"].forEach(id => {
+     "sCharge"].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = "";
     });
     document.getElementById("sStatus").selectedIndex  = 1;
     document.getElementById("sService").selectedIndex = 0;
     resetAddMap();
+    addPending = []; drawAdd();
 
   } catch (e) {
     statusEl.className = "form-status error";
@@ -616,3 +612,163 @@ function toLocalInput(val) {
   const pad = n => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+
+
+// ═════════════════════════════════════════════════════
+// PHOTO UPLOAD  (Firebase Storage, with client-side resize)
+// ═════════════════════════════════════════════════════
+const MAX_PHOTOS = 4;
+let addPending = [];            // new files on the Add form: { file, src }
+let smKept = [], smPending = []; // shipment modal: existing URLs / new files
+
+function takeFiles(list, files, alreadyHave, statusEl) {
+  for (const f of files) {
+    if (!f.type.startsWith("image/")) continue;
+    if (f.size > 20 * 1024 * 1024) { if (statusEl) flash(statusEl, "⚠️ Skipped a file over 20 MB."); continue; }
+    if (list.length + alreadyHave >= MAX_PHOTOS) { if (statusEl) flash(statusEl, `⚠️ Maximum ${MAX_PHOTOS} photos.`); break; }
+    list.push({ file: f, src: URL.createObjectURL(f), pending: true });
+  }
+}
+function flash(el, msg) { el.className = "form-status error"; el.textContent = msg; el.classList.remove("hidden"); }
+
+function drawThumbs(el, items, onRemove) {
+  el.replaceChildren(...items.map((it, i) => {
+    const d = document.createElement("div"); d.className = "thumb";
+    const im = document.createElement("img"); im.src = it.src; im.alt = `Product photo ${i + 1}`;
+    const b = document.createElement("button"); b.type = "button"; b.textContent = "✕";
+    b.setAttribute("aria-label", `Remove photo ${i + 1}`); b.onclick = () => onRemove(i);
+    d.append(im, b);
+    if (it.pending) { const t = document.createElement("span"); t.textContent = "New"; d.append(t); }
+    return d;
+  }));
+}
+
+function wireDrop(drop, input, onFiles) {
+  drop.addEventListener("click", () => input.click());
+  drop.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } });
+  input.addEventListener("change", () => { onFiles([...input.files]); input.value = ""; });
+  ["dragenter", "dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => onFiles([...e.dataTransfer.files]));
+}
+
+// Add Shipment form
+function drawAdd() { drawThumbs(document.getElementById("addThumbs"), addPending, i => { addPending.splice(i, 1); drawAdd(); }); }
+wireDrop(document.getElementById("addDrop"), document.getElementById("addFiles"), files => {
+  takeFiles(addPending, files, 0, document.getElementById("addStatus")); drawAdd();
+});
+
+// Shipment modal
+function drawModalThumbs() {
+  const items = [...smKept.map(src => ({ src })), ...smPending];
+  drawThumbs(document.getElementById("smPhotosGrid"), items, i => {
+    if (i < smKept.length) smKept.splice(i, 1); else smPending.splice(i - smKept.length, 1);
+    drawModalThumbs();
+  });
+}
+function renderModalPhotos(s) { smKept = [...(s.photos || [])]; smPending = []; drawModalThumbs(); }
+wireDrop(document.getElementById("smDrop"), document.getElementById("smFiles"), files => {
+  takeFiles(smPending, files, smKept.length, document.getElementById("smUpdateStatus")); drawModalThumbs();
+});
+async function commitModalPhotos(statusEl) {
+  const s = shipments.find(x => x.id === currentShipmentId);
+  const uploaded = await uploadPending(smPending, s?.trackingId || currentShipmentId, statusEl);
+  return [...smKept, ...uploaded];
+}
+
+// Resize + re-encode in the browser so uploads are fast and small
+async function shrink(file, max, quality) {
+  const bmp = await createImageBitmap(file);
+  const r = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bmp.width * r); c.height = Math.round(bmp.height * r);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise(res => c.toBlob(res, "image/jpeg", quality));
+}
+const blobToDataUrl = b => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); });
+
+async function uploadPending(list, trackingId, statusEl) {
+  const urls = [];
+  const safeId = String(trackingId).replace(/[^A-Za-z0-9_-]/g, "_");
+  for (let i = 0; i < list.length; i++) {
+    const tag = `Uploading photo ${i + 1} of ${list.length}`;
+    statusEl.className = "form-status"; statusEl.textContent = `${tag}…`; statusEl.classList.remove("hidden");
+    try {
+      const blob = await shrink(list[i].file, 1600, 0.82);
+      const path = `shipments/${safeId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+      const task = uploadBytesResumable(sRef(storage, path), blob, { contentType: "image/jpeg" });
+      await new Promise((ok, bad) => task.on("state_changed",
+        snap => { statusEl.textContent = `${tag}… ${Math.round(snap.bytesTransferred / snap.totalBytes * 100)}%`; }, bad, ok));
+      urls.push(await getDownloadURL(task.snapshot.ref));
+    } catch (e) {
+      // Storage not enabled / rules not deployed: keep a small inline copy so the demo still works
+      console.warn("Storage upload failed, using inline fallback:", e);
+      urls.push(await blobToDataUrl(await shrink(list[i].file, 900, 0.7)));
+      statusEl.textContent = "⚠️ Firebase Storage unavailable — saved a compressed copy inline instead.";
+    }
+  }
+  return urls;
+}
+
+// ═════════════════════════════════════════════════════
+// PRINTABLE RECEIPT  (HTML → PNG image / print)
+// ═════════════════════════════════════════════════════
+window.openReceipt = async function (id) {
+  const s = shipments.find(x => x.id === id);
+  if (!s) return;
+  const trackUrl = new URL(`track.html?id=${encodeURIComponent(s.trackingId || "")}`, location.href).href;
+  const row = (k, v) => `<div class="r-row"><span>${k}</span><strong>${esc(v || "—")}</strong></div>`;
+  const photo = (s.photos || [])[0];
+  document.getElementById("receiptPaper").innerHTML = `
+    <div class="r-head">
+      <div class="r-logo">⬡ Swift<b>Freight</b></div>
+      <div class="r-title">Shipment Receipt</div>
+    </div>
+    <div class="r-meta">
+      <div><small>Receipt no.</small><strong>SFR-${esc(s.trackingId)}</strong></div>
+      <div><small>Issued</small><strong>${esc(fmtDate(new Date()))}</strong></div>
+    </div>
+    <div class="r-tracking"><small>Tracking ID</small><strong>${esc(s.trackingId)}</strong></div>
+    ${row("Client", s.client)}${row("From", s.origin)}${row("To", s.destination)}
+    ${row("Service", s.service)}${row("Weight", s.weight)}${row("Status", s.status)}
+    ${row("ETA", s.eta ? fmtDate(s.eta) : "")}
+    ${photo ? `<img class="r-photo" id="rPhoto" alt="Product photo" crossorigin="anonymous" src="${esc(photo)}" onerror="this.remove()"/>` : ""}
+    <div class="r-total"><span>Freight charge</span><strong>${esc(s.charge || "To be confirmed")}</strong></div>
+    <div class="r-foot">
+      <div id="rQr" aria-label="QR code linking to live tracking"></div>
+      <p>Scan to track this shipment live.<br/>swiftfreightlogistics2026@gmail.com</p>
+    </div>
+    <div class="r-thanks">Thank you for shipping with SwiftFreight.</div>`;
+  const qr = document.getElementById("rQr");
+  if (window.QRCode) new QRCode(qr, { text: trackUrl, width: 92, height: 92, correctLevel: QRCode.CorrectLevel.M });
+  document.getElementById("receiptMsg").classList.add("hidden");
+  document.getElementById("receiptModal").classList.remove("hidden");
+};
+window.closeReceipt = () => document.getElementById("receiptModal").classList.add("hidden");
+
+async function receiptCanvas() {
+  const paper = document.getElementById("receiptPaper");
+  await Promise.all([...paper.querySelectorAll("img")].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })));
+  return html2canvas(paper, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+}
+window.downloadReceipt = async function () {
+  const msg = document.getElementById("receiptMsg");
+  try {
+    if (!window.html2canvas) throw new Error("Image library still loading — try again in a moment.");
+    const canvas = await receiptCanvas();
+    const tid = (document.querySelector("#receiptPaper .r-tracking strong")?.textContent || "receipt").replace(/[^\w-]/g, "_");
+    canvas.toBlob(b => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(b); a.download = `SwiftFreight-Receipt-${tid}.png`; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }, "image/png");
+  } catch (e) {
+    msg.className = "form-status error"; msg.textContent = `❌ ${e.message}`; msg.classList.remove("hidden");
+  }
+};
+window.printReceipt = function () {
+  document.body.classList.add("printing-receipt");
+  const done = () => { document.body.classList.remove("printing-receipt"); window.removeEventListener("afterprint", done); };
+  window.addEventListener("afterprint", done);
+  window.print();
+};

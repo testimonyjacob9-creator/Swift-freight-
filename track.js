@@ -31,6 +31,8 @@ const STATUS_COLOR = {
 };
 const SERVICE_ICON = { "Air Freight": "✈️", "Sea Freight": "🚢", "Road Haulage": "🚚" };
 
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
 const resultEl = document.getElementById("tpResult");
 const inputEl  = document.getElementById("tpInput");
 const btnEl    = document.getElementById("tpSearchBtn");
@@ -100,7 +102,7 @@ async function runSearch(id) {
       <div class="tp-error">
         <div class="tp-error-icon">❌</div>
         <h3>Something went wrong</h3>
-        <p>${err.message}</p>
+        <p>${esc(err.message)}</p>
       </div>`;
   }
 }
@@ -110,7 +112,7 @@ function renderError(id) {
     <div class="tp-error">
       <div class="tp-error-icon">🔍</div>
       <h3>Tracking ID not found</h3>
-      <p>We couldn't find a shipment matching <strong style="color:var(--white)">${id}</strong>. Double-check the ID and try again.</p>
+      <p>We couldn't find a shipment matching <strong style="color:var(--white)">${esc(id)}</strong>. Double-check the ID and try again.</p>
       <a href="contact.html" class="btn-primary">Contact Support</a>
     </div>`;
 }
@@ -126,8 +128,8 @@ function renderSuccess(id, d) {
   const gridItems = [
     ["🕒", "Last Update", fmtDate(d.lastUpdate)],
     ["🚀", "ETA",         fmtDate(d.eta)],
-    ["⚖️", "Weight",       d.weight || "—"],
-    ["👤", "Client",       d.client || "—"]
+    ["⚖️", "Weight",       esc(d.weight || "—")],
+    ["👤", "Client",       esc(d.client || "—")]
   ].map(([icon, label, val]) => `<div><strong>${icon} ${label}</strong><span>${val}</span></div>`).join("");
 
   const stepsHtml = STEPS.map((label, i) => {
@@ -138,7 +140,7 @@ function renderSuccess(id, d) {
         <span class="step-dot"></span>
         <div>
           <strong>${label}</strong>
-          ${note ? `<small>${note}</small>` : ""}
+          ${note ? `<small>${esc(note)}</small>` : ""}
         </div>
       </div>`;
   }).join("");
@@ -148,8 +150,8 @@ function renderSuccess(id, d) {
       <p style="font-size:0.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">📷 Shipment Photos</p>
       <div class="tp-photos-grid">
         ${photos.map((url, i) => `
-          <button type="button" class="tp-photo-thumb" data-src="${url}" style="animation-delay:${0.55 + i * 0.08}s">
-            <img src="${url}" alt="Shipment photo" onerror="this.closest('.tp-photo-thumb').style.display='none'"/>
+          <button type="button" class="tp-photo-thumb" data-src="${esc(url)}" style="animation-delay:${0.55 + i * 0.08}s">
+            <img src="${esc(url)}" alt="Shipment photo" onerror="this.closest('.tp-photo-thumb').style.display='none'"/>
           </button>`).join("")}
       </div>
     </div>` : "";
@@ -157,15 +159,15 @@ function renderSuccess(id, d) {
   resultEl.innerHTML = `
     <div class="tp-card tp-reveal">
       <div class="tp-status-band">
-        <span class="tp-id">${id}</span>
-        <span class="tp-status-pill" style="color:${STATUS_COLOR[status] || "var(--text2)"}">${status}</span>
+        <span class="tp-id">${esc(id)}</span>
+        <span class="tp-status-pill" style="color:${STATUS_COLOR[status] || "var(--text2)"}">${esc(status)}</span>
       </div>
 
       <div class="tp-route">
-        <span>🛫 <strong>${d.origin || "—"}</strong></span>
+        <span>🛫 <strong>${esc(d.origin || "—")}</strong></span>
         <span class="tp-route-icon">${svcIcon}</span>
-        <span>🛬 <strong>${d.destination || "—"}</strong></span>
-        <span style="margin-left:auto">📍 Currently: <strong>${d.location || "—"}</strong></span>
+        <span>🛬 <strong>${esc(d.destination || "—")}</strong></span>
+        <span style="margin-left:auto">📍 Currently: <strong>${esc(d.location || "—")}</strong></span>
       </div>
 
       <div class="tp-progress-wrap">

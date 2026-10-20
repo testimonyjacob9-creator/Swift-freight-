@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 </head>
 <body class="admin-body">
 
@@ -135,6 +137,10 @@
                 <input type="text" id="sWeight" placeholder="240 kg"/>
               </div>
             </div>
+            <div class="form-group">
+              <label>Freight charge (shown on receipt)</label>
+              <input type="text" id="sCharge" placeholder="USD 480.00"/>
+            </div>
             <div class="form-row">
               <div class="form-group">
                 <label>ETA</label>
@@ -160,16 +166,13 @@
               <input type="text" id="step4" placeholder="Delivered to recipient"/>
             </div>
 
-            <p style="font-size:0.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;margin-top:8px">📷 Shipment Photos (optional – up to 4 image URLs)</p>
-            <p style="font-size:0.74rem;color:var(--text3);margin-bottom:14px">Must be a <strong style="color:var(--text2)">direct image file link</strong> ending in .jpg/.png/.webp — not a page link. On Unsplash: open the photo, right‑click it → "Copy image address" (not the browser URL bar).</p>
-            <div class="form-row">
-              <div class="form-group"><label>Photo 1 URL</label><input type="url" id="photo0" placeholder="https://images.unsplash.com/photo-…"/></div>
-              <div class="form-group"><label>Photo 2 URL</label><input type="url" id="photo1" placeholder="https://images.unsplash.com/photo-…"/></div>
+            <p class="field-title">📷 Product photos (up to 4)</p>
+            <div class="dropzone" id="addDrop" tabindex="0" role="button" aria-label="Upload product photos">
+              <input type="file" id="addFiles" accept="image/*" multiple hidden/>
+              <strong>Drop images here or click to browse</strong>
+              <small>JPG, PNG or WebP. Resized automatically and uploaded to Firebase Storage when you save.</small>
             </div>
-            <div class="form-row" style="margin-bottom:24px">
-              <div class="form-group"><label>Photo 3 URL</label><input type="url" id="photo2" placeholder="https://images.unsplash.com/photo-…"/></div>
-              <div class="form-group"><label>Photo 4 URL</label><input type="url" id="photo3" placeholder="https://images.unsplash.com/photo-…"/></div>
-            </div>
+            <div class="thumb-grid" id="addThumbs"></div>
 
             <button class="btn-primary" onclick="addShipment()">Save Shipment 🚀</button>
             <div id="addStatus" class="form-status hidden" style="margin-top:16px"></div>
@@ -208,9 +211,13 @@
       </div>
 
       <!-- PHOTOS -->
-      <div id="smPhotosWrap" class="hidden" style="margin-bottom:24px">
-        <p style="font-size:0.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">📷 Shipment Photos</p>
-        <div id="smPhotosGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px"></div>
+      <div id="smPhotosWrap" style="margin-bottom:24px">
+        <p class="field-title">📷 Product photos (up to 4)</p>
+        <div class="thumb-grid" id="smPhotosGrid"></div>
+        <div class="dropzone" id="smDrop" tabindex="0" role="button" aria-label="Add product photos">
+          <input type="file" id="smFiles" accept="image/*" multiple hidden/>
+          <strong>Add photos</strong><small>Click or drop images. Saved when you press Save Changes.</small>
+        </div>
       </div>
 
       <div style="margin-bottom:8px">
@@ -226,9 +233,23 @@
           <input type="text" id="smLocationInput" placeholder="Current location…"
                  style="flex:1;min-width:160px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:0.9rem;outline:none;transition:border-color 0.2s"/>
           <button class="btn-primary" onclick="updateShipmentStatus()" style="padding:10px 22px">Save Changes</button>
+          <button class="btn-outline" onclick="openReceipt(currentShipmentId)" style="padding:10px 22px">🧾 Receipt</button>
         </div>
         <div id="smUpdateStatus" class="form-status hidden" style="margin-top:10px"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ── RECEIPT MODAL ── -->
+  <div class="modal hidden" id="receiptModal" onclick="closeModal(event)">
+    <div class="modal-card" style="max-width:480px">
+      <button class="modal-close" onclick="closeReceipt()" aria-label="Close">✕</button>
+      <div id="receiptPaper" class="receipt"></div>
+      <div class="receipt-actions">
+        <button class="btn-primary" onclick="downloadReceipt()">⬇ Download image</button>
+        <button class="btn-outline" onclick="printReceipt()">🖨 Print</button>
+      </div>
+      <div id="receiptMsg" class="form-status hidden"></div>
     </div>
   </div>
 

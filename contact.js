@@ -75,14 +75,14 @@ window.submitContactForm = async function () {
         <div class="form-success">
           <span class="form-success-icon">✅</span>
           <h3>Message Sent!</h3>
-          <p>Thanks, <strong style="color:var(--white)">${name}</strong>! Our logistics team will get back to you within 2 hours.</p>
+          <p>Thanks, <strong style="color:var(--white)">${name.replace(/[&<>"']/g, ch => "&#" + ch.charCodeAt(0) + ";")}</strong>! Our logistics team will get back to you within 2 hours.</p>
         </div>
       `;
     }
 
   } catch (err) {
     status.className  = "form-status error";
-    status.textContent = `❌ Failed to send: ${err.message}`;
+    status.textContent = "❌ Failed to send. Please try again.";
     status.classList.remove("hidden");
 
     if (btn) {
