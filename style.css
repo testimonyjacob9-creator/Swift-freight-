@@ -507,7 +507,7 @@ img { max-width: 100%; display: block; }
   border-radius: var(--radius-xl);
   padding: 60px 56px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 60px;
   align-items: start;
   position: relative;
