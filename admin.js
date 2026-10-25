@@ -1098,6 +1098,10 @@ window.clearReviewAvatar = async id => { await updateDoc(doc(db, "reviews", id),
 const TRACK_URL = id => new URL(`track.html?id=${encodeURIComponent(id || "")}`, location.href).href;
 let receiptShipment = null;
 
+const pkDate = v => { if (!v) return null; const d = v.toDate ? v.toDate() : new Date(v); return isNaN(d) ? null : d; };
+const pkIso = v => { const d = pkDate(v); if (!d) return ""; const z = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`; };
+const pkLong = v => { const d = pkDate(v); return d ? d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : ""; };
+
 function stampSvg(s) {
   const paid = /paid/i.test(s.payStatus || "") && !/un|part/i.test(s.payStatus || "");
   // Use the date the admin entered on the receipt (issuedIso), not today's date
@@ -1156,6 +1160,7 @@ function receiptHtml(s) {
       <p><u>Payment Mode:</u> <b class="rc-pill pay">${f(s.payMode)}</b> · <b class="rc-pill ${/paid/i.test(s.payStatus || "") && !/un|part/i.test(s.payStatus) ? "ok" : "warn"}">${f(s.payStatus || "Pending")}</b></p>
       <p><u>Mode of Transport:</u> ${f(s.transport || s.service)}</p>
       ${itemsMode ? `<p><u>Shipment:</u> ${f(s.shipType || s.service)}${s.weight ? " · " + esc(s.weight) : ""}</p><p><u>Status:</u> <b style="color:${col}">${f(s.status)}</b></p>` : ""}
+      ${s.pickup ? `<p><u>Pickup Date:</u> ${esc(s.pickup)}</p>` : ""}
       <p><u>Issued:</u> ${esc(s.issued || new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }))}</p>
     </div>
   </div>
@@ -1186,8 +1191,9 @@ function mountReceipt(el, s) {
 window.openReceipt = async function (id) {
   const s = shipments.find(x => x.id === id); if (!s) return;
   await loadSettings();
-  receiptShipment = s;
-  mountReceipt(document.getElementById("receiptPaper"), s);
+  const pk = pkLong(s.lastUpdate);
+  receiptShipment = pk ? { ...s, pickup: pk, issued: pk, issuedIso: pkIso(s.lastUpdate) } : s;
+  mountReceipt(document.getElementById("receiptPaper"), receiptShipment);
   document.getElementById("receiptMsg").classList.add("hidden");
   document.getElementById("receiptModal").classList.remove("hidden");
 };
@@ -1309,7 +1315,7 @@ window.rpFill = function (id) {
   if (!items.length) items.push({ desc: "", qty: 1, unit: "" });
   rpEditId = null;
   rpSet({
-    receiptNo: rpNewNo(), issued: new Date().toISOString().slice(0, 10), trackingId: s.trackingId, orderId: s.orderId, transport: s.transport || s.service, eta: isoDay(s.eta),
+    receiptNo: rpNewNo(), issued: pkIso(s.lastUpdate) || new Date().toISOString().slice(0, 10), pickup: pkLong(s.lastUpdate), trackingId: s.trackingId, orderId: s.orderId, transport: s.transport || s.service, eta: isoDay(s.eta),
     shipType: s.shipType || s.service, status: s.status,
     senderName: s.senderName || s.client, senderPhone: s.senderPhone, senderAddress: s.senderAddress || s.origin, originOffice: s.originOffice || s.origin,
     receiverName: s.receiverName, receiverPhone: s.receiverPhone, receiverAddress: s.receiverAddress || s.destination, destOffice: s.destOffice || s.destination,
@@ -1319,7 +1325,7 @@ window.rpFill = function (id) {
 };
 let rpExtra = {};
 function rpSet(d) {
-  rpExtra = { weight: d.weight || "" };
+  rpExtra = { weight: d.weight || "", pickup: d.pickup || "" };
   const v = (id, val) => { $r(id).value = val ?? ""; };
   v("rpNo", d.receiptNo); v("rpDate", d.issued); v("rpTrack", d.trackingId); v("rpOrder", d.orderId); v("rpTransport", d.transport); v("rpEta", d.eta);
   v("rpType", d.shipType); v("rpStatus", d.status);
@@ -1349,7 +1355,7 @@ function rpRead() {
   const d = g("rpDate");
   return {
     receiptNo: g("rpNo"), issued: d ? new Date(d + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "", issuedIso: d,
-    trackingId: g("rpTrack").toUpperCase(), orderId: g("rpOrder"), transport: g("rpTransport"), eta: g("rpEta"), shipType: g("rpType"), status: g("rpStatus"), weight: rpExtra.weight || "",
+    trackingId: g("rpTrack").toUpperCase(), orderId: g("rpOrder"), transport: g("rpTransport"), eta: g("rpEta"), shipType: g("rpType"), status: g("rpStatus"), weight: rpExtra.weight || "", pickup: rpExtra.pickup || "", pickup: rpExtra.pickup || "",
     senderName: g("rpFromName"), senderPhone: g("rpFromPhone"), senderAddress: g("rpFromAddr"), originOffice: g("rpFromOffice"),
     receiverName: g("rpToName"), receiverPhone: g("rpToPhone"), receiverAddress: g("rpToAddr"), destOffice: g("rpToOffice"),
     currency: g("rpCur"), discount: parseFloat($r("rpDisc").value) || 0, items: rpItems.map(i => ({ desc: String(i.desc || "").trim(), qty: +i.qty || 1, unit: +i.unit || 0 })),
