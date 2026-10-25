@@ -126,7 +126,7 @@ function renderSuccess(id, d) {
   const photos   = d.photos || [];
 
   const gridItems = [
-    ["🕒", "Last Update", fmtDate(d.lastUpdate)],
+    ["🕒", "Pickup Date", fmtDate(d.lastUpdate)],
     ["🚀", "ETA",         fmtDate(d.eta)],
     ["⚖️", "Weight",       esc(d.weight || "—")],
     ["👤", "Client",       esc(d.client || "—")]

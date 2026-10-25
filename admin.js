@@ -300,7 +300,7 @@ window.renderShipments = function () {
         ${s.payStatus   ? `<span class="paytag ${esc(String(s.payStatus).toLowerCase())}">💳 ${esc(s.payStatus)}</span>` : ""}
       </div>
       <div class="sub-preview">
-        📍 ${esc(s.location || "—")} &nbsp;|&nbsp; ETA: ${fmtDate(s.eta)} &nbsp;|&nbsp; Updated: ${fmtDate(s.lastUpdate)}
+        📍 ${esc(s.location || "—")} &nbsp;|&nbsp; ETA: ${fmtDate(s.eta)} &nbsp;|&nbsp; Pickup: ${fmtDate(s.lastUpdate)}
       </div>
     </div>
   `).join("");
