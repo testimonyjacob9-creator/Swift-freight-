@@ -1100,7 +1100,9 @@ let receiptShipment = null;
 
 function stampSvg(s) {
   const paid = /paid/i.test(s.payStatus || "") && !/un|part/i.test(s.payStatus || "");
-  const d = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
+  // Use the date the admin entered on the receipt (issuedIso), not today's date
+  const base = s.issuedIso ? new Date(s.issuedIso + "T12:00:00") : (s.issued ? new Date(s.issued) : new Date());
+  const d = (isNaN(base) ? new Date() : base).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
   const c = paid ? "#16a34a" : "#1d4ed8", mid = paid ? "PAID" : "ISSUED";
   return `<svg viewBox="0 0 120 120" width="104" height="104" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(-12deg)">
     <defs><path id="rcArcT" d="M16,60 a44,44 0 1,1 88,0"/><path id="rcArcB" d="M10,60 a50,50 0 0,0 100,0"/></defs>
