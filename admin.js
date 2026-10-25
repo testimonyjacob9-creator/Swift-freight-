@@ -380,6 +380,7 @@ window.openShipment = function (id) {
     <div class="form-group"><label>Destination</label><input type="text" id="smDest" value="${escAttr(s.destination)}"/></div>
     <div class="form-group"><label>Weight</label><input type="text" id="smWeight" value="${escAttr(s.weight)}"/></div>
     <div class="form-group"><label>ETA</label><input type="datetime-local" id="smEta" value="${toLocalInput(s.eta)}"/></div>
+    <div class="form-group"><label>Pickup Date</label><input type="datetime-local" id="smPickup" value="${toLocalInput(s.lastUpdate)}"/></div>
     <div class="form-group"><label>Freight charge</label><input type="text" id="smCharge" value="${escAttr(s.charge)}" placeholder="USD 480.00"/></div>
   `;
 
@@ -530,6 +531,7 @@ window.updateShipmentStatus = async function () {
   const dest    = document.getElementById("smDest").value.trim();
   const weight  = document.getElementById("smWeight").value.trim();
   const etaRaw  = document.getElementById("smEta").value;
+  const pickupRaw = document.getElementById("smPickup")?.value || "";
   const charge  = document.getElementById("smCharge").value.trim();
 
   try {
@@ -545,7 +547,8 @@ window.updateShipmentStatus = async function () {
       destination: dest    || null,
       weight:      weight  || null,
       eta:         etaRaw ? Timestamp.fromDate(new Date(etaRaw)) : null,
-      lastUpdate: serverTimestamp(),
+      // Pickup Date: only change it when the admin sets one (never overwrite with "now")
+      ...(pickupRaw ? { lastUpdate: Timestamp.fromDate(new Date(pickupRaw)) } : {}),
       ...readExtra("sx_")
     };
     const prev = shipments.find(x => x.id === currentShipmentId);
